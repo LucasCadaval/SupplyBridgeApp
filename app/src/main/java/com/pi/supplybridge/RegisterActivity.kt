@@ -2,6 +2,7 @@ package com.pi.supplybridge
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 
 class RegisterActivity : ComponentActivity() {
@@ -48,6 +50,28 @@ class RegisterActivity : ComponentActivity() {
     }
 }
 
+fun saveUserDataToFirestore(uid: String?, name: String, cnpj: String, email: String) {
+    val db = FirebaseFirestore.getInstance()
+
+    val user = hashMapOf(
+        "uid" to uid,
+        "name" to name,
+        "cnpj" to cnpj,
+        "email" to email
+    )
+
+    uid?.let {
+        db.collection("users").document(uid)
+            .set(user)
+            .addOnSuccessListener {
+                Log.d("Firestore", "dados de usuario salvos com sucesso!")
+            }
+            .addOnFailureListener { e ->
+                Log.e("Firestore", "erro ao salvar dados do usuário: ${e.message}", e)
+            }
+    }
+}
+
 @Composable
 fun RegisterScreen(
     onLoginClick: () -> Unit
@@ -59,30 +83,30 @@ fun RegisterScreen(
     ) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
-        var username by remember { mutableStateOf("") }
+        var name by remember { mutableStateOf("") }
         var cnpj by remember { mutableStateOf("") }
         val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
-//        OutlinedTextField(
-//            value = username,
-//            onValueChange = { username = it },
-//            label = { Text("username") }
-//        )
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Nome") }
+        )
 
         Spacer(modifier = Modifier.size(16.dp))
 
-//        OutlinedTextField(
-//            value = cnpj,
-//            onValueChange = { cnpj = it },
-//            label = { Text("cnpj") }
-//        )
+        OutlinedTextField(
+            value = cnpj,
+            onValueChange = { cnpj = it },
+            label = { Text("CNPJ") }
+        )
 
         Spacer(modifier = Modifier.size(16.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("email") }
+            label = { Text("E-mail") }
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -90,7 +114,7 @@ fun RegisterScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("password") }
+            label = { Text("Senha") }
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -110,16 +134,26 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.size(16.dp))
 
         Button(onClick = {
-            auth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener { task ->
-                    if (task.isSuccessful) {
-                        onLoginClick()
-                    } else {
-                        println("Erro ao fazer o registro")
+            if (email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() && password.length >= 6) {
+                auth.createUserWithEmailAndPassword(email, password)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
+                            saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email)
+                            onLoginClick()
+                        } else {
+                            Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
+                        }
                     }
+            } else {
+                if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    Log.w("Validation", "O e-mail está vazio ou mal formatado.")
+                } else if (password.length < 6) {
+                    Log.w("Validation", "A senha deve ter no mínimo 6 caracteres.")
                 }
+            }
         }) {
-            Text("Register")
+            Text("Registrar")
         }
     }
 }
