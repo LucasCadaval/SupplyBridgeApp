@@ -3,8 +3,10 @@ package com.pi.supplybridge
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,10 +26,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.com.caelum.stella.validation.CNPJValidator
+import br.com.caelum.stella.validation.InvalidStateException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
@@ -47,6 +55,16 @@ class RegisterActivity : ComponentActivity() {
     private fun navigateToLogin() {
         val intent = Intent(this@RegisterActivity, MainActivity::class.java)
         startActivity(intent)
+    }
+}
+
+fun isValidCNPJ(cnpj: String): Boolean {
+    return try {
+        val validator = CNPJValidator()
+        validator.assertValid(cnpj)
+        true
+    } catch (e: InvalidStateException) {
+        false
     }
 }
 
@@ -76,17 +94,18 @@ fun saveUserDataToFirestore(uid: String?, name: String, cnpj: String, email: Str
 fun RegisterScreen(
     onLoginClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var cnpj by remember { mutableStateOf("") }
+    val auth: FirebaseAuth = FirebaseAuth.getInstance()
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        var email by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        var name by remember { mutableStateOf("") }
-        var cnpj by remember { mutableStateOf("") }
-        val auth: FirebaseAuth = FirebaseAuth.getInstance()
-
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -114,7 +133,8 @@ fun RegisterScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Senha") }
+            label = { Text("Senha") },
+            visualTransformation = PasswordVisualTransformation()
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -134,22 +154,31 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.size(16.dp))
 
         Button(onClick = {
-            if (email.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() && password.length >= 6) {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
-                            saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email)
-                            onLoginClick()
-                        } else {
-                            Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
+            when {
+                name.isEmpty() -> {
+                    Toast.makeText(context, "Preencha o nome", Toast.LENGTH_SHORT).show()
+                }
+                cnpj.isEmpty() || !isValidCNPJ(cnpj) -> {
+                    Toast.makeText(context, "CNPJ inválido", Toast.LENGTH_SHORT).show()
+                }
+                email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                    Toast.makeText(context, "E-mail inválido", Toast.LENGTH_SHORT).show()
+                }
+                password.length < 6 -> {
+                    Toast.makeText(context, "A senha deve ter no mínimo 6 caracteres", Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
+                                saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email)
+                                onLoginClick()
+                            } else {
+                                Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
+                                Toast.makeText(context, "Erro ao registrar", Toast.LENGTH_SHORT).show()
+                            }
                         }
-                    }
-            } else {
-                if (email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                    Log.w("Validation", "O e-mail está vazio ou mal formatado.")
-                } else if (password.length < 6) {
-                    Log.w("Validation", "A senha deve ter no mínimo 6 caracteres.")
                 }
             }
         }) {
