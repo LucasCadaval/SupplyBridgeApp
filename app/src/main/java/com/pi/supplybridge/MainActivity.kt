@@ -7,21 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,7 +35,8 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LoginScreen(
                         onRegisterClick = { navigateToRegister() },
-                        onLoginClick = { navigateToHome() }
+                        onLoginClick = { navigateToHome() },
+                        onForgotPasswordClick = { navigateToForgotPassword() }
                     )
                 }
             }
@@ -60,12 +52,18 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(this, HomeActivity::class.java)
         startActivity(intent)
     }
+
+    private fun navigateToForgotPassword() {
+        val intent = Intent(this, ForgotPasswordActivity::class.java)
+        startActivity(intent)
+    }
 }
 
 @Composable
 fun LoginScreen(
     onRegisterClick: () -> Unit,
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    onForgotPasswordClick: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -87,7 +85,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("email") }
+            label = { Text("Email") }
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -95,12 +93,40 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("password") }
+            label = { Text("Senha") }
         )
 
         Spacer(modifier = Modifier.size(16.dp))
 
-        // Texto clicável para registro
+        Text(
+            text = "Esqueceu a senha?",
+            style = TextStyle(
+                color = Color.Blue,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .clickable { onForgotPasswordClick() }
+                .padding(8.dp)
+        )
+
+        Spacer(modifier = Modifier.size(16.dp))
+
+        Button(onClick = {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        onLoginClick()
+                    } else {
+                        println("Erro ao fazer o login")
+                    }
+                }
+        }) {
+            Text("Entrar")
+        }
+
+        Spacer(modifier = Modifier.size(16.dp))
+
         Text(
             text = "Não possui uma conta? Registre-se",
             style = TextStyle(
@@ -112,30 +138,17 @@ fun LoginScreen(
                 .clickable { onRegisterClick() }
                 .padding(8.dp)
         )
-
-        Spacer(modifier = Modifier.size(16.dp))
-
-        Button(onClick = {
-            auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    onLoginClick()
-                } else {
-                    println("Erro ao fazer o login")
-                }
-            } }) {
-            Text("Entrar")
-        }
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun LoginScreenPreview() {
     SupplyBridgeTheme {
         LoginScreen(
             onRegisterClick = {},
-            onLoginClick = {}
+            onLoginClick = {},
+            onForgotPasswordClick = {}
         )
     }
 }
