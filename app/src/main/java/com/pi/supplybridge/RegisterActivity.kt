@@ -97,6 +97,12 @@ fun RegisterScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Image(
+            modifier = Modifier.size(150.dp),
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = stringResource(id = R.string.app_name)
+        )
+
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },

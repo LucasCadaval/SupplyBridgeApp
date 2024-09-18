@@ -3,6 +3,7 @@ package com.pi.supplybridge.utils
 import br.com.caelum.stella.validation.CNPJValidator
 import br.com.caelum.stella.validation.InvalidStateException
 
+
 object ValidationUtils {
     fun isValidCNPJ(cnpj: String): Boolean {
         return try {

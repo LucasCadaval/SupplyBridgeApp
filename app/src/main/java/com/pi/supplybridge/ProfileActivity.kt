@@ -25,6 +25,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.pi.supplybridge.utils.ValidationUtils
 
+
 class ProfileActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
