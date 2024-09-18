@@ -39,6 +39,7 @@ import br.com.caelum.stella.validation.InvalidStateException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
+import com.pi.supplybridge.utils.ValidationUtils
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,16 +56,6 @@ class RegisterActivity : ComponentActivity() {
     private fun navigateToLogin() {
         val intent = Intent(this@RegisterActivity, MainActivity::class.java)
         startActivity(intent)
-    }
-}
-
-fun isValidCNPJ(cnpj: String): Boolean {
-    return try {
-        val validator = CNPJValidator()
-        validator.assertValid(cnpj)
-        true
-    } catch (e: InvalidStateException) {
-        false
     }
 }
 
@@ -158,7 +149,7 @@ fun RegisterScreen(
                 name.isEmpty() -> {
                     Toast.makeText(context, "Preencha o nome", Toast.LENGTH_SHORT).show()
                 }
-                cnpj.isEmpty() || !isValidCNPJ(cnpj) -> {
+                cnpj.isEmpty() || !ValidationUtils.isValidCNPJ(cnpj) -> {
                     Toast.makeText(context, "CNPJ inválido", Toast.LENGTH_SHORT).show()
                 }
                 email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {

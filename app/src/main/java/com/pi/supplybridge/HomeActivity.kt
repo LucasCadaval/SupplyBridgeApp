@@ -23,14 +23,14 @@ class HomeActivity : ComponentActivity() {
                     Box(
                         modifier = Modifier.fillMaxSize(),
 //                        contentAlignment = Alignment.Center
-                    ) 
-//                    Button(onClick = {
-//                        val intent = Intent(this, ProfileActivity::class.java)
-//                        startActivity(intent)
-//                    })
-//                    {
-//                        Text(text = "Bem-vindo à Home!")
-//                    }
+                    )
+                    Button(onClick = {
+                      val intent = Intent(this, ProfileActivity::class.java)
+                       startActivity(intent)
+                    })
+                    {
+                        Text(text = "Bem-vindo à Home!")
+                    }
                 }
             }
         }
