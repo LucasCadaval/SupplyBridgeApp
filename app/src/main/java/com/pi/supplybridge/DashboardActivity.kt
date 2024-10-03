@@ -5,29 +5,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.constraintlayout.compose.ConstraintLayout
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,152 +28,197 @@ class DashboardActivity : ComponentActivity() {
         setContent {
             SupplyBridgeTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    Dashboard(name = "Lucas", email = "lucas@gmail.com")
+                    Dashboard()
                 }
             }
         }
     }
+}
 
-    private fun navigateToRegister() {
-        val intent = Intent(this, RegisterActivity::class.java)
-        startActivity(intent)
-    }
+@Composable
+fun Dashboard() {
+    var selectedTab by remember { mutableStateOf(0) }
 
-    private fun navigateToHome() {
-        val intent = Intent(this, HomeActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun navigateToForgotPassword() {
-        val intent = Intent(this, ForgotPasswordActivity::class.java)
-        startActivity(intent)
+    Scaffold(
+        bottomBar = {
+            BottomAppBar(
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                NavigationBarItem(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_home),
+                            contentDescription = "Home",
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    label = { Text("Home") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_history),
+                            contentDescription = "Histórico",
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    label = { Text("Histórico") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 2,
+                    onClick = { selectedTab = 2 },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_chat),
+                            contentDescription = "Chat",
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    label = { Text("Chat") }
+                )
+                NavigationBarItem(
+                    selected = selectedTab == 3,
+                    onClick = { selectedTab = 3 },
+                    icon = {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_account),
+                            contentDescription = "Conta",
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    label = { Text("Conta") }
+                )
+            }
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            when (selectedTab) {
+                0 -> HomeScreen()
+                1 -> HistoryScreen()
+                2 -> ChatScreen()
+                3 -> AccountScreen()
+            }
+        }
     }
 }
 
 @Composable
-fun Dashboard(name: String, email: String) {
-    val stores = listOf(
-        "Loja A" to "Peça 1",
-        "Loja B" to "Peça 2",
-        "Loja C" to "Peça 3",
-        "Loja D" to "Peça 4",
-        "Loja E" to "Peça 5"
-    )
-
+fun HomeScreen() {
     Column(
-        Modifier
-            .fillMaxSize()
-            .background(color = Color.LightGray),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        ConstraintLayout {
-            val (header, list, title) = createRefs()
-
-            // Cabeçalho
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(110.dp)
-                    .constrainAs(header) {
-                        top.linkTo(parent.top)
-                        start.linkTo(parent.start)
-                    }
-                    .background(color = Color.DarkGray)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxSize(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Moldura redonda para a imagem do usuário
-                    Image(
-                        painter = painterResource(id = R.drawable.henry),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, Color.Gray, CircleShape),
-                        contentScale = ContentScale.Crop
-                    )
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    // Texto com nome e email
-                    Column {
-                        Text(
-                            text = "Olá, $name!",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = Color.White
-                        )
-                        Text(
-                            text = email,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-
-            Text(
-                text = "Pedidos em andamento:",
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .constrainAs(title) {
-                        top.linkTo(header.bottom)
-                        start.linkTo(parent.start)
-                    }
-            )
-
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .constrainAs(list) {
-                        top.linkTo(title.bottom)
-                        start.linkTo(parent.start)
-                    }
-                    .padding(16.dp)
-            ) {
-                items(stores) { supplier ->
-                    SupplierItem(storeName = supplier.first, partName = supplier.second)
-                    Spacer(modifier = Modifier.height(8.dp)) // Espaço entre os itens
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun SupplierItem(storeName: String, partName: String) {
-    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White)
-            .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
-            .clickable {
-                println("Clicou em $storeName - $partName")
-            }
+            .fillMaxSize()
+            .background(Color.LightGray)
             .padding(16.dp)
     ) {
-        Column {
-            Text(text = storeName, style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Peça: $partName", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        var searchQuery by remember { mutableStateOf("") }
+
+        TextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Buscar pedido") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp)
+        )
+
+        val orders = listOf(
+            Order("Peça A", "Loja X"),
+            Order("Peça B", "Loja Y"),
+            Order("Peça C", "Loja Z"),
+            Order("Peça D", "Loja X"),
+            Order("Peça E", "Loja Y")
+        )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(orders) { order ->
+                OrderItem(order)
+            }
         }
     }
 }
 
+data class Order(val partName: String, val storeName: String)
 
+@Composable
+fun OrderItem(order: Order) {
+    val context = LocalContext.current
 
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable {
+//                val intent = Intent(context, OrderDetailActivity::class.java)
+//                intent.putExtra("partName", order.partName)
+//                intent.putExtra("storeName", order.storeName)
+//                context.startActivity(intent)
+            },
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(text = "Peça: ${order.partName}", style = MaterialTheme.typography.bodyLarge)
+                Text(text = "Loja: ${order.storeName}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+            }
+        }
+    }
+}
 
+@Composable
+fun HistoryScreen() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.LightGray)
+    ) {
+        Text(text = "Histórico Screen", style = MaterialTheme.typography.headlineMedium)
+    }
+}
 
+@Composable
+fun ChatScreen() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.LightGray)
+    ) {
+        Text(text = "Chat Screen", style = MaterialTheme.typography.headlineMedium)
+    }
+}
+
+@Composable
+fun AccountScreen() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.LightGray)
+    ) {
+        Text(text = "Conta Screen", style = MaterialTheme.typography.headlineMedium)
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
 fun DashboardActivityPreview() {
     SupplyBridgeTheme {
-        Dashboard(name = "lucas", email = "email@email.com")
+        Dashboard()
     }
 }
