@@ -25,6 +25,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.google.firebase.auth.FirebaseAuth
+import com.pi.supplybridge.activities.ForgotPasswordActivity
+import com.pi.supplybridge.activities.HomeActivity
+import com.pi.supplybridge.activities.RegisterActivity
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
