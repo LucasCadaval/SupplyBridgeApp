@@ -7,7 +7,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -17,9 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -31,6 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.pi.supplybridge.R
+import com.pi.supplybridge.activities.DashboardActivity
+import com.pi.supplybridge.activities.ForgotPasswordActivity
+import com.pi.supplybridge.activities.HomeActivity
+import com.pi.supplybridge.activities.NewOrderActivity
+import com.pi.supplybridge.activities.RegisterActivity
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +45,6 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     LoginScreen(
                         onRegisterClick = { navigateToRegister() },
-                        onLoginClick = { navigateToHome() },
                         onForgotPasswordClick = { navigateToForgotPassword() }
                     )
                 }
@@ -55,7 +58,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun navigateToHome() {
-        val intent = Intent(this, DashboardActivity::class.java)
+        val intent = Intent(this, HomeActivity::class.java)
         startActivity(intent)
     }
 
@@ -68,19 +71,23 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun LoginScreen(
     onRegisterClick: () -> Unit,
-    onLoginClick: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
     val context = LocalContext.current
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         val auth: FirebaseAuth = FirebaseAuth.getInstance()
+
+        Image(
+            modifier = Modifier.size(150.dp),
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = stringResource(id = R.string.app_name)
+        )
 
         Spacer(modifier = Modifier.size(16.dp))
 
@@ -101,26 +108,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.size(16.dp))
 
-        Button(onClick = {
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(context, "Preencha os dados", Toast.LENGTH_SHORT).show()
-            } else {
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            onLoginClick()
-                        } else {
-                            Toast.makeText(context, "Usuário ou senha incorretos", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-            }
-        }) {
-            Text("Entrar")
-        }
-
-
-        Spacer(modifier = Modifier.size(16.dp))
-
         Text(
             text = "Esqueceu a senha?",
             style = TextStyle(
@@ -132,6 +119,43 @@ fun LoginScreen(
                 .clickable { onForgotPasswordClick() }
                 .padding(8.dp)
         )
+
+        Spacer(modifier = Modifier.size(16.dp))
+
+        Button(onClick = {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val userId = auth.currentUser?.uid
+                        if (userId != null) {
+                            val db = FirebaseFirestore.getInstance()
+                            db.collection("users").document(userId)
+                                .get()
+                                .addOnSuccessListener { document ->
+                                    if (document != null) {
+                                        val tipoUsuario = document.getString("userType")
+                                        if (tipoUsuario == "fornecedor") {
+                                            val intent = Intent(context, DashboardActivity::class.java)
+                                            context.startActivity(intent)
+                                        } else if (tipoUsuario == "loja") {
+                                            val intent = Intent(context, NewOrderActivity::class.java)
+                                            context.startActivity(intent)
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "Erro ao buscar informações do usuário", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    Toast.makeText(context, "Erro ao buscar dados do usuário", Toast.LENGTH_SHORT).show()
+                                }
+                        }
+                    } else {
+                        Toast.makeText(context, "Erro ao fazer o login: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+        }) {
+            Text("Entrar")
+        }
 
         Spacer(modifier = Modifier.size(16.dp))
 
@@ -149,13 +173,13 @@ fun LoginScreen(
     }
 }
 
+
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
     SupplyBridgeTheme {
         LoginScreen(
             onRegisterClick = {},
-            onLoginClick = {},
             onForgotPasswordClick = {}
         )
     }

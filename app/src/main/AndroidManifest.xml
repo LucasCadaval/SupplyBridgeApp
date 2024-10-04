@@ -24,13 +24,13 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".HomeActivity"/>
+        <activity android:name=".activities.HomeActivity"/>
         <activity android:name=".RegisterActivity"/>
-        <activity android:name=".ProfileActivity"/>
-        <activity android:name=".ForgotPasswordActivity"/>
-        <activity android:name=".DashboardActivity"/>
-        <activity android:name=".NewOrderActivity"/>
-        <activity android:name=".OrderDetailActivity"/>
+        <activity android:name=".activities.ProfileActivity"/>
+        <activity android:name=".activities.ForgotPasswordActivity"/>
+        <activity android:name=".activities.DashboardActivity"/>
+        <activity android:name=".activities.NewOrderActivity"/>
+        <activity android:name=".activities.OrderDetailActivity"/>
 
     </application>
 
