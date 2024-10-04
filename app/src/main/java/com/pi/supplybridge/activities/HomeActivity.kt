@@ -1,4 +1,4 @@
-package com.pi.supplybridge
+package com.pi.supplybridge.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 
