@@ -1,4 +1,4 @@
-package com.pi.supplybridge
+package com.pi.supplybridge.activities
 
 import android.os.Bundle
 import android.widget.Toast

@@ -2,12 +2,10 @@ package com.pi.supplybridge
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -17,15 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,7 +49,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun navigateToHome() {
-        val intent = Intent(this, DashboardActivity::class.java)
+        val intent = Intent(this, HomeActivity::class.java)
         startActivity(intent)
     }
 
@@ -71,16 +65,20 @@ fun LoginScreen(
     onLoginClick: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
-    val context = LocalContext.current
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         var email by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         val auth: FirebaseAuth = FirebaseAuth.getInstance()
+
+        Image(
+            modifier = Modifier.size(150.dp),
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = stringResource(id = R.string.app_name)
+        )
 
         Spacer(modifier = Modifier.size(16.dp))
 
@@ -95,29 +93,8 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Senha") },
-            visualTransformation = PasswordVisualTransformation()
+            label = { Text("Senha") }
         )
-
-        Spacer(modifier = Modifier.size(16.dp))
-
-        Button(onClick = {
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(context, "Preencha os dados", Toast.LENGTH_SHORT).show()
-            } else {
-                auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            onLoginClick()
-                        } else {
-                            Toast.makeText(context, "Usuário ou senha incorretos", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-            }
-        }) {
-            Text("Entrar")
-        }
-
 
         Spacer(modifier = Modifier.size(16.dp))
 
@@ -132,6 +109,21 @@ fun LoginScreen(
                 .clickable { onForgotPasswordClick() }
                 .padding(8.dp)
         )
+
+        Spacer(modifier = Modifier.size(16.dp))
+
+        Button(onClick = {
+            auth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        onLoginClick()
+                    } else {
+                        println("Erro ao fazer o login")
+                    }
+                }
+        }) {
+            Text("Entrar")
+        }
 
         Spacer(modifier = Modifier.size(16.dp))
 

@@ -1,4 +1,4 @@
-package com.pi.supplybridge
+package com.pi.supplybridge.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,12 +10,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,10 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import br.com.caelum.stella.validation.CNPJValidator
-import br.com.caelum.stella.validation.InvalidStateException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.pi.supplybridge.R
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.pi.supplybridge.utils.ValidationUtils
 
@@ -59,24 +60,25 @@ class RegisterActivity : ComponentActivity() {
     }
 }
 
-fun saveUserDataToFirestore(uid: String?, name: String, cnpj: String, email: String) {
+fun saveUserDataToFirestore(uid: String?, name: String, cnpj: String, email: String, userType: String) {
     val db = FirebaseFirestore.getInstance()
 
     val user = hashMapOf(
         "uid" to uid,
         "name" to name,
         "cnpj" to cnpj,
-        "email" to email
+        "email" to email,
+        "userType" to userType
     )
 
     uid?.let {
         db.collection("users").document(uid)
             .set(user)
             .addOnSuccessListener {
-                Log.d("Firestore", "dados de usuario salvos com sucesso!")
+                Log.d("Firestore", "Dados de usuário salvos com sucesso!")
             }
             .addOnFailureListener { e ->
-                Log.e("Firestore", "erro ao salvar dados do usuário: ${e.message}", e)
+                Log.e("Firestore", "Erro ao salvar dados do usuário: ${e.message}", e)
             }
     }
 }
@@ -90,6 +92,7 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var cnpj by remember { mutableStateOf("") }
+    var userType by remember { mutableStateOf("fornecedor") } // Novo estado para armazenar o tipo de usuário
     val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     Column(
@@ -136,6 +139,32 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.size(16.dp))
 
+        Text(text = "Tipo de Usuário:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Row(
+            modifier = Modifier.padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                RadioButton(
+                    selected = userType == "fornecedor",
+                    onClick = { userType = "fornecedor" }
+                )
+                Text("Fornecedor")
+            }
+
+            Spacer(modifier = Modifier.size(16.dp))
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                RadioButton(
+                    selected = userType == "loja",
+                    onClick = { userType = "loja" }
+                )
+                Text("Loja")
+            }
+        }
+
+        Spacer(modifier = Modifier.size(16.dp))
+
         Text(
             text = "Já possui uma conta? Entre",
             style = TextStyle(
@@ -169,7 +198,7 @@ fun RegisterScreen(
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful) {
                                 Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
-                                saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email)
+                                saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email, userType)
                                 onLoginClick()
                             } else {
                                 Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
