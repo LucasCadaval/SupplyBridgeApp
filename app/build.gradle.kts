@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.pi.supplybridge"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.pi.supplybridge"
@@ -70,9 +70,16 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth:23.0.0")
-    implementation("com.danielfariati:cpf-cnpj-validator:1.1")
-    implementation ("br.com.caelum.stella:caelum-stella-core:2.1.2")
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+    implementation(libs.cpf.cnpj.validator)
+    implementation (libs.caelum.stella.core)
+    implementation (libs.androidx.constraintlayout.compose.android)
+    implementation(libs.androidx.foundation)
+//    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
+//    implementation("com.google.firebase:firebase-analytics")
+//    implementation("com.google.firebase:firebase-auth:23.0.0")
+//    implementation("com.danielfariati:cpf-cnpj-validator:1.1")
+//    implementation ("br.com.caelum.stella:caelum-stella-core:2.1.2")
 }

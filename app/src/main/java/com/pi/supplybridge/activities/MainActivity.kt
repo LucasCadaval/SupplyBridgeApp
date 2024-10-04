@@ -1,8 +1,7 @@
-package com.pi.supplybridge.activities
+package com.pi.supplybridge
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,19 +16,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import com.pi.supplybridge.R
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,7 +65,6 @@ fun LoginScreen(
     onLoginClick: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
-    val context = LocalContext.current
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
@@ -99,8 +93,7 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Senha") },
-            visualTransformation = PasswordVisualTransformation()
+            label = { Text("Senha") }
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -123,31 +116,9 @@ fun LoginScreen(
             auth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        val userId = auth.currentUser?.uid
-                        if (userId != null) {
-                            val db = FirebaseFirestore.getInstance()
-                            db.collection("users").document(userId)
-                                .get()
-                                .addOnSuccessListener { document ->
-                                    if (document != null) {
-                                        val tipoUsuario = document.getString("userType")
-                                        if (tipoUsuario == "fornecedor") {
-                                            val intent = Intent(context, HomeActivity::class.java)
-                                            context.startActivity(intent)
-                                        } else if (tipoUsuario == "loja") {
-                                            val intent = Intent(context, DashboardActivity::class.java)
-                                            context.startActivity(intent)
-                                        }
-                                    } else {
-                                        Toast.makeText(context, "Erro ao buscar informações do usuário", Toast.LENGTH_SHORT).show()
-                                    }
-                                }
-                                .addOnFailureListener {
-                                    Toast.makeText(context, "Erro ao buscar dados do usuário", Toast.LENGTH_SHORT).show()
-                                }
-                        }
+                        onLoginClick()
                     } else {
-                        Toast.makeText(context, "Erro ao fazer o login: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        println("Erro ao fazer o login")
                     }
                 }
         }) {
@@ -169,7 +140,6 @@ fun LoginScreen(
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
