@@ -2,6 +2,7 @@ package com.pi.supplybridge
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,6 +25,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.QuerySnapshot
+import com.pi.supplybridge.models.Order
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +45,7 @@ class DashboardActivity : ComponentActivity() {
 
 @Composable
 fun Dashboard() {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
         bottomBar = {
@@ -107,8 +111,8 @@ fun Dashboard() {
             when (selectedTab) {
                 0 -> HomeScreen()
                 1 -> OrdersScreen()
-                2 -> ChatScreen()
-                3 -> AccountScreen()
+                //2 -> ChatScreen()
+                //3 -> AccountScreen()
             }
         }
     }
@@ -116,14 +120,29 @@ fun Dashboard() {
 
 @Composable
 fun HomeScreen() {
+    var searchQuery by remember { mutableStateOf("") }
+    var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("orders")
+            .get()
+            .addOnSuccessListener { result ->
+                val fetchedOrders = result.toOrdersList()
+                orders = fetchedOrders
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Erro ao buscar pedidos: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.LightGray)
             .padding(16.dp)
     ) {
-        var searchQuery by remember { mutableStateOf("") }
-
         TextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
@@ -131,14 +150,6 @@ fun HomeScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
-        )
-
-        val orders = listOf(
-            Order("Peça A", "Loja X"),
-            Order("Peça B", "Loja Y"),
-            Order("Peça C", "Loja Z"),
-            Order("Peça D", "Loja X"),
-            Order("Peça E", "Loja Y")
         )
 
         LazyColumn(
@@ -153,7 +164,22 @@ fun HomeScreen() {
 
 @Composable
 fun OrdersScreen() {
+    var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("orders")
+            .get()
+            .addOnSuccessListener { result ->
+                val fetchedOrders = result.toOrdersList()
+                orders = fetchedOrders
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Erro ao buscar pedidos: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
 
     Column(
         modifier = Modifier
@@ -163,9 +189,8 @@ fun OrdersScreen() {
     ) {
         Button(
             onClick = {
-                // Ação para criar um novo pedido
-//                val intent = Intent(context, NewOrderActivity::class.java)
-//                context.startActivity(intent)
+                val intent = Intent(context, NewOrderActivity()::class.java)
+                context.startActivity(intent)
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -175,30 +200,35 @@ fun OrdersScreen() {
         }
 
         Text(
-            text = "Histórico de Pedidos Fechados",
+            text = "Histórico de Pedidos",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        val closedOrders = listOf(
-            Order("Peça F", "Loja Z"),
-            Order("Peça G", "Loja W"),
-            Order("Peça H", "Loja X"),
-            Order("Peça I", "Loja Y"),
-            Order("Peça J", "Loja V")
         )
 
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
-            items(closedOrders) { order ->
+            items(orders) { order ->
                 OrderItem(order)
             }
         }
     }
 }
 
-data class Order(val partName: String, val storeName: String)
+fun QuerySnapshot.toOrdersList(): List<Order> {
+    val orders = mutableListOf<Order>()
+    for (document in this) {
+        val id = document.id
+        val partName = document.getString("partName") ?: ""
+        val storeName = document.getString("storeName") ?: ""
+        val quantity = document.getString("quantity") ?: ""
+        val paymentMethod = document.getString("paymentMethod") ?: ""
+        val deliveryAddress = document.getString("deliveryAddress") ?: ""
+        val notes = document.getString("notes") ?: ""
+        orders.add(Order(id, partName, storeName, quantity, paymentMethod, deliveryAddress, notes))
+    }
+    return orders
+}
 
 @Composable
 fun OrderItem(order: Order) {
@@ -209,11 +239,10 @@ fun OrderItem(order: Order) {
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable {
-                // Abrir uma visão mais detalhada do pedido
-//                val intent = Intent(context, OrderDetailActivity::class.java)
-//                intent.putExtra("partName", order.partName)
-//                intent.putExtra("storeName", order.storeName)
-//                context.startActivity(intent)
+                val intent = Intent(context, OrderDetailActivity::class.java).apply {
+                    putExtra("orderId", order.id)
+                }
+                context.startActivity(intent)
             },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
@@ -228,114 +257,5 @@ fun OrderItem(order: Order) {
                 Text(text = "Loja: ${order.storeName}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
             }
         }
-    }
-}
-
-@Composable
-fun ChatScreen() {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.LightGray)
-    ) {
-        Text(text = "Chat Screen", style = MaterialTheme.typography.headlineMedium)
-    }
-}
-
-@Composable
-fun AccountScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.LightGray)
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // Imagem do usuário em formato circular
-        Image(
-            painter = painterResource(id = R.drawable.henry), // Substituir pelo ID correto da imagem do usuário
-            contentDescription = "Imagem do Usuário",
-            modifier = Modifier
-                .size(100.dp)
-                .clip(CircleShape)
-                .background(Color.White),
-            contentScale = ContentScale.Crop
-        )
-
-        // Nome do usuário
-        Text(
-            text = "Nome do Usuário", // Substitua pelo nome real do usuário
-            style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(top = 16.dp, bottom = 32.dp)
-        )
-
-        // Opções de conta
-        Card(
-            modifier = Modifier
-                .width(200.dp)
-                .padding(vertical = 16.dp)
-                .clickable {
-                    // Ação ao clicar no card
-                },
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .height(50.dp)
-                    .align(Alignment.CenterHorizontally)
-            ) {
-                Text(text = "Gerenciar Conta", style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-
-        Card(
-            modifier = Modifier
-                .width(200.dp)
-                .padding(vertical = 16.dp)
-                .clickable {
-                    // Ação ao clicar no card
-                },
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .height(50.dp)
-                    .align(Alignment.CenterHorizontally)
-            ) {
-                Text(text = "Notificações", style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-
-
-        Card(
-            modifier = Modifier
-                .width(200.dp)
-                .padding(vertical = 16.dp)
-                .clickable {
-                    // Ação ao clicar no card
-                },
-            elevation = CardDefaults.cardElevation(4.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .height(50.dp)
-                    .align(Alignment.CenterHorizontally)
-            ) {
-                Text(text = "Sair", style = MaterialTheme.typography.bodyLarge)
-            }
-        }
-
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DashboardActivityPreview() {
-    SupplyBridgeTheme {
-        Dashboard()
     }
 }
