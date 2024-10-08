@@ -1,6 +1,7 @@
 [versions]
 agp = "8.5.1"
 caelumStellaCore = "2.1.6"
+composeInputTextMask = "1.0.0"
 constraintlayoutComposeAndroid = "1.1.0-beta01"
 cpfCnpjValidator = "1.1"
 firebaseAuth = "23.0.0"
@@ -15,6 +16,7 @@ lifecycleRuntimeKtx = "2.8.4"
 activityCompose = "1.9.1"
 composeBom = "2024.04.01"
 firebaseFirestoreKtx = "25.1.0"
+maskededittext = "1.1.0"
 roomKtx = "2.6.1"
 
 [libraries]
@@ -22,6 +24,7 @@ androidx-constraintlayout-compose-android = { module = "androidx.constraintlayou
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "foundation" }
 caelum-stella-core = { module = "br.com.caelum.stella:caelum-stella-core", version.ref = "caelumStellaCore" }
+compose-input-text-mask = { module = "com.github.renatopp:compose-input-text-mask", version.ref = "composeInputTextMask" }
 cpf-cnpj-validator = { module = "com.danielfariati:cpf-cnpj-validator", version.ref = "cpfCnpjValidator" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
@@ -41,6 +44,7 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 firebase-firestore-ktx = { group = "com.google.firebase", name = "firebase-firestore-ktx", version.ref = "firebaseFirestoreKtx" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
+maskededittext = { module = "com.github.ShowcaseZ:MaskedEditText", version.ref = "maskededittext" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

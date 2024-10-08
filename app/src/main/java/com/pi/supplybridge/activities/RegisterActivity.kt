@@ -13,13 +13,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +45,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.MainActivity
 import com.pi.supplybridge.R
+import com.pi.supplybridge.utils.MaskVisualTransformation
 import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.pi.supplybridge.utils.ValidationUtils
 
@@ -97,36 +103,55 @@ fun RegisterScreen(
     val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
-            modifier = Modifier.size(150.dp),
+            modifier = Modifier.size(140.dp),
             painter = painterResource(id = R.drawable.logo),
             contentDescription = stringResource(id = R.string.app_name)
+        )
+
+        Spacer(modifier = Modifier.size(32.dp))
+
+        Text(
+            text = "Cadastre-se aqui!",
+                style = TextStyle(
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier.padding(vertical = 16.dp)
         )
 
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nome") }
+            label = { Text("Nome da Empresa") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.LightGray,
+                unfocusedContainerColor = Color.White
+            )
         )
 
         Spacer(modifier = Modifier.size(16.dp))
 
-        OutlinedTextField(
-            value = cnpj,
-            onValueChange = { cnpj = it },
-            label = { Text("CNPJ") }
-        )
+        CNPJInputField(cnpj = cnpj, onCNPJChange = { cnpj = it })
 
         Spacer(modifier = Modifier.size(16.dp))
 
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("E-mail") }
+            label = { Text("E-mail") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.LightGray,
+                unfocusedContainerColor = Color.White
+            )
         )
 
         Spacer(modifier = Modifier.size(16.dp))
@@ -135,12 +160,17 @@ fun RegisterScreen(
             value = password,
             onValueChange = { password = it },
             label = { Text("Senha") },
-            visualTransformation = PasswordVisualTransformation()
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.LightGray,
+                unfocusedContainerColor = Color.White
+            )
         )
 
-        Spacer(modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.size(24.dp))
 
-        Text(text = "Tipo de Usuário:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(text = "Qual é o seu papel?", fontWeight = FontWeight.Bold, fontSize = 16.sp)
         Row(
             modifier = Modifier.padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.Center
@@ -158,14 +188,14 @@ fun RegisterScreen(
                     selected = userType == "loja",
                     onClick = { userType = "loja" }
                 )
-                Text("Loja")
+                Text("Lojista")
             }
         }
 
-        Spacer(modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.size(24.dp))
 
         Text(
-            text = "Já possui uma conta? Entre",
+            text = "Já possui uma conta? Entre aqui.",
             style = TextStyle(
                 color = Color.Blue,
                 fontSize = 16.sp,
@@ -176,38 +206,74 @@ fun RegisterScreen(
                 .padding(8.dp)
         )
 
-        Spacer(modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.size(24.dp))
 
-        Button(onClick = {
-            when {
-                name.isEmpty() -> {
-                    Toast.makeText(context, "Preencha o nome", Toast.LENGTH_SHORT).show()
-                }
-                cnpj.isEmpty() || !ValidationUtils.isValidCNPJ(cnpj) -> {
-                    Toast.makeText(context, "CNPJ inválido", Toast.LENGTH_SHORT).show()
-                }
-                email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
-                    Toast.makeText(context, "E-mail inválido", Toast.LENGTH_SHORT).show()
-                }
-                password.length < 6 -> {
-                    Toast.makeText(context, "A senha deve ter no mínimo 6 caracteres", Toast.LENGTH_SHORT).show()
-                }
-                else -> {
-                    auth.createUserWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
-                                saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email, userType)
-                                onLoginClick()
-                            } else {
-                                Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
-                                Toast.makeText(context, "Erro ao registrar", Toast.LENGTH_SHORT).show()
+        Button(
+            onClick = {
+                when {
+                    name.isEmpty() -> {
+                        Toast.makeText(context, "Preencha o nome", Toast.LENGTH_SHORT).show()
+                    }
+                    cnpj.isEmpty() || !ValidationUtils.isValidCNPJ(cnpj) -> {
+                        Toast.makeText(context, "CNPJ inválido", Toast.LENGTH_SHORT).show()
+                    }
+                    email.isEmpty() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                        Toast.makeText(context, "E-mail inválido", Toast.LENGTH_SHORT).show()
+                    }
+                    password.length < 6 -> {
+                        Toast.makeText(context, "A senha deve ter no mínimo 6 caracteres", Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {
+                        auth.createUserWithEmailAndPassword(email, password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
+                                    saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email, userType)
+                                    onLoginClick()
+                                } else {
+                                    Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
+                                    Toast.makeText(context, "Erro ao registrar", Toast.LENGTH_SHORT).show()
+                                }
                             }
-                        }
+                    }
                 }
-            }
-        }) {
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Blue,
+                contentColor = Color.White
+            )
+        ) {
             Text("Registrar")
         }
     }
+}
+
+@Composable
+fun CNPJInputField(cnpj: String, onCNPJChange: (String) -> Unit) {
+    var textState by remember { mutableStateOf(cnpj) }
+
+    val cnpjMask = "##.###.###/####-##"
+    val visualTransformation = MaskVisualTransformation(cnpjMask)
+
+    OutlinedTextField(
+        value = textState,
+        onValueChange = { newValue ->
+            if (newValue.length <= 14 && newValue.all { it.isDigit() }) {
+                textState = newValue
+                onCNPJChange(newValue)
+            }
+        },
+        visualTransformation = visualTransformation,
+        modifier = Modifier.fillMaxWidth(),
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
+            imeAction = ImeAction.Done
+        ),
+        placeholder = { Text("CNPJ") },
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = Color.LightGray,
+            unfocusedContainerColor = Color.White
+        )
+    )
 }
