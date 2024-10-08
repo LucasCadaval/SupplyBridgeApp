@@ -1,4 +1,4 @@
-package com.pi.supplybridge.ui.theme
+package com.pi.supplybridge.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build

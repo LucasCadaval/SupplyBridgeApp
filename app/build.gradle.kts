@@ -74,12 +74,11 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.cpf.cnpj.validator)
-    implementation (libs.caelum.stella.core)
-    implementation (libs.androidx.constraintlayout.compose.android)
+    implementation(libs.caelum.stella.core)
+    implementation(libs.androidx.constraintlayout.compose.android)
     implementation(libs.androidx.foundation)
-//    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
-//    implementation("com.google.firebase:firebase-analytics")
-//    implementation("com.google.firebase:firebase-auth:23.0.0")
-//    implementation("com.danielfariati:cpf-cnpj-validator:1.1")
-//    implementation ("br.com.caelum.stella:caelum-stella-core:2.1.2")
+    implementation(libs.androidx.navigation.compose)
+
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
 }

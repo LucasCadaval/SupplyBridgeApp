@@ -1,11 +1,5 @@
-package com.pi.supplybridge.activities
+package com.pi.supplybridge.presentation.ui.screens
 
-import android.content.Intent
-import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,31 +9,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
-import androidx.compose.ui.platform.LocalContext
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.QuerySnapshot
+import androidx.navigation.NavController
 import com.pi.supplybridge.R
-import com.pi.supplybridge.models.Order
-
-class DashboardActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            SupplyBridgeTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    Dashboard()
-                }
-            }
-        }
-    }
-}
+import com.pi.supplybridge.domain.models.Order
+import com.pi.supplybridge.presentation.ui.navigation.Screen
+import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun Dashboard() {
+fun DashboardScreen(navController: NavController) {
     var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
@@ -104,8 +85,8 @@ fun Dashboard() {
                 .padding(innerPadding)
         ) {
             when (selectedTab) {
-                0 -> HomeScreen()
-                1 -> OrdersScreen()
+                0 -> DashboardHomeScreen(navController)
+                1 -> OrdersScreen(navController)
                 //2 -> ChatScreen()
                 //3 -> AccountScreen()
             }
@@ -114,22 +95,16 @@ fun Dashboard() {
 }
 
 @Composable
-fun HomeScreen() {
+fun DashboardHomeScreen(
+    navController: NavController,
+    orderViewModel: OrderViewModel = koinViewModel()
+) {
     var searchQuery by remember { mutableStateOf("") }
-    var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
+    val orders by orderViewModel.orders.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("orders")
-            .get()
-            .addOnSuccessListener { result ->
-                val fetchedOrders = result.toOrdersList()
-                orders = fetchedOrders
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Erro ao buscar pedidos: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        orderViewModel.loadOrders()
     }
 
     Column(
@@ -151,30 +126,23 @@ fun HomeScreen() {
             modifier = Modifier.fillMaxSize()
         ) {
             items(orders) { order ->
-                OrderItem(order)
+                OrderItem(order, navController)
             }
         }
     }
 }
 
 @Composable
-fun OrdersScreen() {
-    var orders by remember { mutableStateOf<List<Order>>(emptyList()) }
+fun OrdersScreen(
+    navController: NavController,
+    orderViewModel: OrderViewModel = koinViewModel()
+) {
+    val orders by orderViewModel.orders.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("orders")
-            .get()
-            .addOnSuccessListener { result ->
-                val fetchedOrders = result.toOrdersList()
-                orders = fetchedOrders
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Erro ao buscar pedidos: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        orderViewModel.loadOrders()
     }
-
 
     Column(
         modifier = Modifier
@@ -183,10 +151,7 @@ fun OrdersScreen() {
             .padding(16.dp)
     ) {
         Button(
-            onClick = {
-                val intent = Intent(context, NewOrderActivity()::class.java)
-                context.startActivity(intent)
-            },
+            onClick = { navController.navigate(Screen.NewOrder.route) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
@@ -204,40 +169,20 @@ fun OrdersScreen() {
             modifier = Modifier.fillMaxSize()
         ) {
             items(orders) { order ->
-                OrderItem(order)
+                OrderItem(order, navController)
             }
         }
     }
 }
 
-fun QuerySnapshot.toOrdersList(): List<Order> {
-    val orders = mutableListOf<Order>()
-    for (document in this) {
-        val id = document.id
-        val partName = document.getString("partName") ?: ""
-        val storeName = document.getString("storeName") ?: ""
-        val quantity = document.getString("quantity") ?: ""
-        val paymentMethod = document.getString("paymentMethod") ?: ""
-        val deliveryAddress = document.getString("deliveryAddress") ?: ""
-        val notes = document.getString("notes") ?: ""
-        orders.add(Order(id, partName, storeName, quantity, paymentMethod, deliveryAddress, notes))
-    }
-    return orders
-}
-
 @Composable
-fun OrderItem(order: Order) {
-    val context = LocalContext.current
-
+fun OrderItem(order: Order, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .clickable {
-                val intent = Intent(context, OrderDetailActivity::class.java).apply {
-                    putExtra("orderId", order.id)
-                }
-                context.startActivity(intent)
+                navController.navigate(Screen.OrderDetail.createRoute(order.id))
             },
         elevation = CardDefaults.cardElevation(4.dp)
     ) {

@@ -1,12 +1,11 @@
-package com.pi.supplybridge.activities
+package com.pi.supplybridge.presentation.ui.screens
 
-import android.content.Intent
-import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,34 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material3.CircularProgressIndicator
-
-class NewOrderActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            SupplyBridgeTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    NewOrderScreen()
-                }
-            }
-        }
-    }
-}
+import androidx.navigation.NavController
+import com.pi.supplybridge.domain.models.Order
+import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun NewOrderScreen() {
+fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel = koinViewModel()) {
     var partName by remember { mutableStateOf("") }
     var storeName by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
@@ -50,18 +30,18 @@ fun NewOrderScreen() {
     var deliveryAddress by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
     val paymentMethods = listOf("Dinheiro", "Pix", "Boleto", "Cartão de Crédito", "Cartão de Débito")
+    val coroutineScope = rememberCoroutineScope()
 
-    Surface(
-        color = Color(0xFFEFEFEF)
-    ) {
+    Surface(color = Color(0xFFEFEFEF)) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            Header(onBackClick = { context.startActivity(Intent(context, DashboardActivity::class.java)) })
+            Header(onBackClick = { navController.popBackStack() })
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -77,9 +57,7 @@ fun NewOrderScreen() {
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
+                Column(modifier = Modifier.padding(16.dp)) {
                     InputField(label = "Nome da Peça", value = partName, onValueChange = { partName = it })
                     InputField(label = "Nome da Loja", value = storeName, onValueChange = { storeName = it })
                     InputField(label = "Quantidade", value = quantity, onValueChange = { quantity = it })
@@ -100,29 +78,27 @@ fun NewOrderScreen() {
                     Button(
                         onClick = {
                             if (validateFields(partName, storeName, quantity, paymentMethod, deliveryAddress)) {
-                                loading = true // Inicia o carregamento
-                                val orderData = hashMapOf(
-                                    "partName" to partName,
-                                    "storeName" to storeName,
-                                    "quantity" to quantity,
-                                    "paymentMethod" to paymentMethod,
-                                    "deliveryAddress" to deliveryAddress,
-                                    "notes" to notes
-                                )
-
-                                val db = FirebaseFirestore.getInstance()
-                                db.collection("orders")
-                                    .add(orderData)
-                                    .addOnSuccessListener {
+                                coroutineScope.launch {
+                                    loading = true
+                                    val order = Order(
+                                        partName = partName,
+                                        storeName = storeName,
+                                        quantity = quantity,
+                                        paymentMethod = paymentMethod,
+                                        deliveryAddress = deliveryAddress,
+                                        notes = notes
+                                    )
+                                    val success = orderViewModel.saveOrder(
+                                        order
+                                    )
+                                    loading = false
+                                    if (success) {
                                         Toast.makeText(context, "Pedido salvo com sucesso!", Toast.LENGTH_SHORT).show()
-                                        context.startActivity(Intent(context, DashboardActivity::class.java)) // redireciona para Dashboard após salvar
-                                    }
-                                    .addOnFailureListener {
+                                        navController.popBackStack()
+                                    } else {
                                         Toast.makeText(context, "Erro ao salvar o pedido.", Toast.LENGTH_SHORT).show()
                                     }
-                                    .addOnCompleteListener {
-                                        loading = false // Para o carregamento
-                                    }
+                                }
                             } else {
                                 Toast.makeText(context, "Por favor, preencha todos os campos corretamente.", Toast.LENGTH_SHORT).show()
                             }
@@ -172,7 +148,9 @@ fun InputField(label: String, value: String, onValueChange: (String) -> Unit) {
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         colors = TextFieldDefaults.colors(
             focusedTextColor = Color.Black,
             unfocusedTextColor = Color.Gray,
@@ -191,10 +169,12 @@ fun PaymentMethodDropdown(
     onExpandedChange: (Boolean) -> Unit,
     paymentMethods: List<String>
 ) {
-    Box(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+    Box(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 8.dp)) {
         TextField(
             value = paymentMethod,
-            onValueChange = { /* Não faz nada, o dropdown cuida disso */ },
+            onValueChange = { /* No-op */ },
             label = { Text("Método de Pagamento") },
             trailingIcon = {
                 IconButton(onClick = { onExpandedChange(true) }) {
@@ -232,12 +212,4 @@ fun validateFields(partName: String, storeName: String, quantity: String, paymen
     val paymentMethods = listOf("Dinheiro", "Pix", "Boleto", "Cartão de Crédito", "Cartão de Débito")
     return partName.isNotBlank() && storeName.isNotBlank() && quantity.isNotBlank() &&
             paymentMethods.contains(paymentMethod) && deliveryAddress.isNotBlank()
-}
-
-@Preview(showBackground = true)
-@Composable
-fun NewOrderScreenPreview() {
-    SupplyBridgeTheme {
-        NewOrderScreen()
-    }
 }

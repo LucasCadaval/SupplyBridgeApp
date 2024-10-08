@@ -1,34 +1,13 @@
-package com.pi.supplybridge.activities
+package com.pi.supplybridge.presentation.ui.screens
 
-import android.content.Intent
-import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,64 +22,37 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.pi.supplybridge.MainActivity
 import com.pi.supplybridge.R
+import com.pi.supplybridge.domain.models.User
+import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import com.pi.supplybridge.utils.MaskVisualTransformation
-import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
 import com.pi.supplybridge.utils.ValidationUtils
 
-class RegisterActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            SupplyBridgeTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    RegisterScreen(onLoginClick = { navigateToLogin() })
-                }
-            }
-        }
-    }
-
-    private fun navigateToLogin() {
-        val intent = Intent(this@RegisterActivity, MainActivity::class.java)
-        startActivity(intent)
-    }
-}
-
-fun saveUserDataToFirestore(uid: String?, name: String, cnpj: String, email: String, userType: String) {
-    val db = FirebaseFirestore.getInstance()
-
-    val user = hashMapOf(
-        "uid" to uid,
-        "name" to name,
-        "cnpj" to cnpj,
-        "email" to email,
-        "userType" to userType
-    )
-
-    uid?.let {
-        db.collection("users").document(uid)
-            .set(user)
-            .addOnSuccessListener {
-                Log.d("Firestore", "Dados de usuário salvos com sucesso!")
-            }
-            .addOnFailureListener { e ->
-                Log.e("Firestore", "Erro ao salvar dados do usuário: ${e.message}", e)
-            }
-    }
-}
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun RegisterScreen(
-    onLoginClick: () -> Unit
+    onLoginClick: () -> Unit,
+    userViewModel: UserViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
+    val isLoading by userViewModel.isLoading.collectAsState()
+    val isSaveSuccessful by userViewModel.isSaveSuccessful.collectAsState()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var cnpj by remember { mutableStateOf("") }
     var userType by remember { mutableStateOf("fornecedor") }
-    val auth: FirebaseAuth = FirebaseAuth.getInstance()
+
+    LaunchedEffect(isSaveSuccessful) {
+        if (isSaveSuccessful == true) {
+            Toast.makeText(context, "Usuário registrado com sucesso!", Toast.LENGTH_SHORT).show()
+            onLoginClick()
+        } else if (isSaveSuccessful == false) {
+            Toast.makeText(context, "Erro ao registrar o usuário.", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -119,7 +71,7 @@ fun RegisterScreen(
 
         Text(
             text = "Cadastre-se aqui!",
-                style = TextStyle(
+            style = TextStyle(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             ),
@@ -224,17 +176,15 @@ fun RegisterScreen(
                         Toast.makeText(context, "A senha deve ter no mínimo 6 caracteres", Toast.LENGTH_SHORT).show()
                     }
                     else -> {
-                        auth.createUserWithEmailAndPassword(email, password)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    Log.d("Auth", "Usuário criado com sucesso: ${auth.currentUser?.uid}")
-                                    saveUserDataToFirestore(auth.currentUser?.uid, name, cnpj, email, userType)
-                                    onLoginClick()
-                                } else {
-                                    Log.e("Auth", "Erro ao fazer o registro: ${task.exception?.message}", task.exception)
-                                    Toast.makeText(context, "Erro ao registrar", Toast.LENGTH_SHORT).show()
-                                }
-                            }
+                        val user = User(
+                            name = name,
+                            userType = userType,
+                            cnpj = cnpj,
+                            email = email,
+                            password = password
+                        )
+
+                        userViewModel.saveUser(user)
                     }
                 }
             },
@@ -244,15 +194,19 @@ fun RegisterScreen(
                 contentColor = Color.White
             )
         ) {
-            Text("Registrar")
+            if (isLoading) {
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+            } else {
+                Text("Registrar")
+            }
         }
     }
 }
 
+
 @Composable
 fun CNPJInputField(cnpj: String, onCNPJChange: (String) -> Unit) {
     var textState by remember { mutableStateOf(cnpj) }
-
     val cnpjMask = "##.###.###/####-##"
     val visualTransformation = MaskVisualTransformation(cnpjMask)
 
