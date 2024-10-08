@@ -1,12 +1,9 @@
-package com.pi.supplybridge.activities
+package com.pi.supplybridge.presentation.ui.screens
 
-import android.content.Intent
-import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,62 +14,22 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.pi.supplybridge.ui.theme.SupplyBridgeTheme
-import com.google.firebase.firestore.FirebaseFirestore
-import com.pi.supplybridge.models.Order
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.Card
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-
-class OrderDetailActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            SupplyBridgeTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    val orderId = intent.getStringExtra("orderId") ?: ""
-                    OrderDetailScreen(orderId)
-                }
-            }
-        }
-    }
-}
+import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun OrderDetailScreen(orderId: String) {
-    var order by remember { mutableStateOf<Order?>(null) }
-    var loading by remember { mutableStateOf(true) }
+fun OrderDetailScreen(
+    orderId: String,
+    onBackClick: () -> Unit,
+    orderViewModel: OrderViewModel = koinViewModel()
+) {
+    val order by orderViewModel.orderDetails.collectAsState()
+    val isLoading by orderViewModel.isLoading.collectAsState()
     val context = LocalContext.current
 
     LaunchedEffect(orderId) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("orders").document(orderId).get()
-            .addOnSuccessListener { document ->
-                if (document.exists()) {
-                    order = Order(
-                        id = document.id,
-                        partName = document.getString("partName") ?: "",
-                        storeName = document.getString("storeName") ?: "",
-                        quantity = document.getString("quantity") ?: "",
-                        paymentMethod = document.getString("paymentMethod") ?: "",
-                        deliveryAddress = document.getString("deliveryAddress") ?: "",
-                        notes = document.getString("notes") ?: ""
-                    )
-                } else {
-                    Toast.makeText(context, "Pedido não encontrado.", Toast.LENGTH_SHORT).show()
-                }
-                loading = false
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Erro ao buscar detalhes do pedido: ${e.message}", Toast.LENGTH_SHORT).show()
-                loading = false
-            }
+        orderViewModel.loadOrderById(orderId)
     }
 
     Surface(
@@ -90,9 +47,7 @@ fun OrderDetailScreen(orderId: String) {
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(onClick = {
-                        context.startActivity(Intent(context, DashboardActivity::class.java))
-                    }) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Voltar",
@@ -108,7 +63,7 @@ fun OrderDetailScreen(orderId: String) {
                     )
                 }
 
-                if (loading) {
+                if (isLoading) {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                 } else {
                     order?.let {
@@ -153,13 +108,5 @@ fun DetailRow(label: String, value: String) {
             text = annotatedString,
             modifier = Modifier.padding(bottom = 14.dp)
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun OrderDetailScreenPreview() {
-    SupplyBridgeTheme {
-        OrderDetailScreen(orderId = "exemplo_id")
     }
 }

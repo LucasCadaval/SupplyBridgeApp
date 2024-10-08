@@ -1,4 +1,4 @@
-package com.pi.supplybridge.ui.theme
+package com.pi.supplybridge.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
