@@ -27,6 +27,10 @@ import com.pi.supplybridge.domain.models.User
 import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import com.pi.supplybridge.utils.MaskVisualTransformation
 import com.pi.supplybridge.utils.ValidationUtils
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 import org.koin.androidx.compose.koinViewModel
 
@@ -45,6 +49,9 @@ fun RegisterScreen(
     var cnpj by remember { mutableStateOf("") }
     var userType by remember { mutableStateOf("fornecedor") }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     LaunchedEffect(isSaveSuccessful) {
         if (isSaveSuccessful == true) {
             Toast.makeText(context, "Usuário registrado com sucesso!", Toast.LENGTH_SHORT).show()
@@ -57,7 +64,13 @@ fun RegisterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                })
+            },
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

@@ -1,5 +1,6 @@
 package com.pi.supplybridge.presentation.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,16 +13,38 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.pi.supplybridge.R
 import com.pi.supplybridge.domain.models.Order
 import com.pi.supplybridge.presentation.ui.navigation.Screen
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun DashboardScreen(navController: NavController) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showExitConfirmationDialog by remember { mutableStateOf(false) }
+
+    BackHandler {
+        showExitConfirmationDialog = true // Mostra o diálogo de confirmação
+    }
+
+    if (showExitConfirmationDialog) {
+        ExitConfirmationDialog(
+            onConfirm = {
+                // Aqui você pode fazer o logout do usuário se necessário
+                navController.popBackStack() // Volta para a tela anterior
+            },
+            onDismiss = {
+                showExitConfirmationDialog = false // Fecha o diálogo
+            }
+        )
+    }
 
     Scaffold(
         bottomBar = {
@@ -88,7 +111,7 @@ fun DashboardScreen(navController: NavController) {
                 0 -> DashboardHomeScreen(navController)
                 1 -> OrdersScreen(navController)
                 //2 -> ChatScreen()
-                //3 -> AccountScreen()
+                3 -> ProfileScreen()
             }
         }
     }
@@ -103,6 +126,9 @@ fun DashboardHomeScreen(
     val orders by orderViewModel.orders.collectAsState()
     val context = LocalContext.current
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     LaunchedEffect(Unit) {
         orderViewModel.loadOrders()
     }
@@ -112,6 +138,12 @@ fun DashboardHomeScreen(
             .fillMaxSize()
             .background(Color.LightGray)
             .padding(16.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                })
+            }
     ) {
         TextField(
             value = searchQuery,
@@ -198,4 +230,24 @@ fun OrderItem(order: Order, navController: NavController) {
             }
         }
     }
+}
+
+@Composable
+fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Sair")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+        title = { Text("Sair da conta") },
+        text = { Text("Tem certeza que deseja sair?") },
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+    )
 }
