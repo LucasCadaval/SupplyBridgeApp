@@ -19,6 +19,10 @@ import com.pi.supplybridge.domain.models.Order
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel = koinViewModel()) {
@@ -34,11 +38,20 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
     val paymentMethods = listOf("Dinheiro", "Pix", "Boleto", "Cartão de Crédito", "Cartão de Débito")
     val coroutineScope = rememberCoroutineScope()
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     Surface(color = Color(0xFFEFEFEF)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    })
+                },
             verticalArrangement = Arrangement.Top
         ) {
             Header(onBackClick = { navController.popBackStack() })

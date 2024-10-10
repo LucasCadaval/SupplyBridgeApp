@@ -20,6 +20,10 @@ import com.pi.supplybridge.domain.models.Order
 import com.pi.supplybridge.presentation.ui.navigation.Screen
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun DashboardScreen(navController: NavController) {
@@ -122,6 +126,9 @@ fun DashboardHomeScreen(
     val orders by orderViewModel.orders.collectAsState()
     val context = LocalContext.current
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     LaunchedEffect(Unit) {
         orderViewModel.loadOrders()
     }
@@ -131,6 +138,12 @@ fun DashboardHomeScreen(
             .fillMaxSize()
             .background(Color.LightGray)
             .padding(16.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                    keyboardController?.hide()
+                })
+            }
     ) {
         TextField(
             value = searchQuery,
