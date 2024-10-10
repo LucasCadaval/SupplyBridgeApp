@@ -1,5 +1,6 @@
 package com.pi.supplybridge.presentation.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.pi.supplybridge.R
 import com.pi.supplybridge.domain.models.Order
@@ -22,6 +24,23 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun DashboardScreen(navController: NavController) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    var showExitConfirmationDialog by remember { mutableStateOf(false) }
+
+    BackHandler {
+        showExitConfirmationDialog = true // Mostra o diálogo de confirmação
+    }
+
+    if (showExitConfirmationDialog) {
+        ExitConfirmationDialog(
+            onConfirm = {
+                // Aqui você pode fazer o logout do usuário se necessário
+                navController.popBackStack() // Volta para a tela anterior
+            },
+            onDismiss = {
+                showExitConfirmationDialog = false // Fecha o diálogo
+            }
+        )
+    }
 
     Scaffold(
         bottomBar = {
@@ -198,4 +217,24 @@ fun OrderItem(order: Order, navController: NavController) {
             }
         }
     }
+}
+
+@Composable
+fun ExitConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text("Sair")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        },
+        title = { Text("Sair da conta") },
+        text = { Text("Tem certeza que deseja sair?") },
+        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
+    )
 }
