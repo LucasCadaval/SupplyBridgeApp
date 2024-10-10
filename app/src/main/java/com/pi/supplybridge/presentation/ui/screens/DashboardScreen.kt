@@ -88,7 +88,7 @@ fun DashboardScreen(navController: NavController) {
                 0 -> DashboardHomeScreen(navController)
                 1 -> OrdersScreen(navController)
                 //2 -> ChatScreen()
-                //3 -> AccountScreen()
+                3 -> ProfileScreen()
             }
         }
     }
