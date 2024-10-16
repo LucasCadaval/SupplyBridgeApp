@@ -1,12 +1,11 @@
 package com.pi.supplybridge.presentation.ui.navigation
 
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.pi.supplybridge.presentation.ui.screens.DashboardScreen
+import com.pi.supplybridge.presentation.ui.screens.DashboardMenu
 import com.pi.supplybridge.presentation.ui.screens.ForgotPasswordScreen
 import com.pi.supplybridge.presentation.ui.screens.HomeScreen
 import com.pi.supplybridge.presentation.ui.screens.LoginScreen
@@ -26,7 +25,7 @@ fun NavigationHost(
         modifier = modifier
     ) {
         composable(route = Screen.Dashboard.route) {
-            DashboardScreen(navController)
+            DashboardMenu(navController)
         }
 
         composable(route = Screen.OrderDetail.route) { backStackEntry ->

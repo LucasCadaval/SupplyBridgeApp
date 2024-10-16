@@ -29,7 +29,71 @@ class OrderRepository(private val service: FirebaseService) {
         }
     }
 
-    suspend fun saveOrder(order: Order) {
-        ordersCollection.add(order).await()
+    suspend fun saveOrder(order: Order): Boolean {
+        return try {
+            ordersCollection
+                .add(order.toMap())
+                .await()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun getOrdersByStatus(status: String): List<Order> {
+        return try {
+            val snapshot = ordersCollection
+                .whereEqualTo("status", status)
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { document ->
+                document.toObject(Order::class.java)?.copy(id = document.id)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun getOrdersByUserId(userId: String, isStore: Boolean): List<Order> {
+        val field = if (isStore) "storeName" else "supplierId"
+        return try {
+            val snapshot = ordersCollection
+                .whereEqualTo(field, userId)
+                .get()
+                .await()
+            snapshot.documents.mapNotNull { document ->
+                document.toObject(Order::class.java)?.copy(id = document.id)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun updateOrderStatus(orderId: String, newStatus: String): Boolean {
+        return try {
+            ordersCollection.document(orderId)
+                .update("status", newStatus)
+                .await()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun Order.toMap(): Map<String, Any?> {
+        return mapOf(
+            "partName" to partName,
+            "storeName" to storeName,
+            "quantity" to quantity,
+            "paymentMethod" to paymentMethod,
+            "deliveryAddress" to deliveryAddress,
+            "notes" to notes,
+            "status" to status,
+            "createdAt" to createdAt
+        )
     }
 }

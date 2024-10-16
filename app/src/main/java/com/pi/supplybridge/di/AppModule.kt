@@ -5,8 +5,11 @@ import com.pi.supplybridge.data.repositories.OrderRepository
 import com.pi.supplybridge.data.repositories.UserRepository
 import com.pi.supplybridge.data.services.FirebaseService
 import com.pi.supplybridge.domain.usecases.order.GetOrderByIdUseCase
+import com.pi.supplybridge.domain.usecases.order.GetOrdersByStatusUseCase
+import com.pi.supplybridge.domain.usecases.order.GetOrdersByUserIdUseCase
 import com.pi.supplybridge.domain.usecases.order.GetOrdersUseCase
 import com.pi.supplybridge.domain.usecases.order.SaveOrderUseCase
+import com.pi.supplybridge.domain.usecases.order.UpdateOrderStatusUseCase
 import com.pi.supplybridge.domain.usecases.user.GetUserByIdUseCase
 import com.pi.supplybridge.domain.usecases.user.SaveUserUseCase
 import com.pi.supplybridge.domain.usecases.user.UpdateUserUseCase
@@ -31,6 +34,9 @@ val appModule = module {
     factory { GetOrdersUseCase(get()) }
     factory { GetOrderByIdUseCase(get()) }
     factory { SaveOrderUseCase(get()) }
+    factory { GetOrdersByStatusUseCase(get()) }
+    factory { GetOrdersByUserIdUseCase(get()) }
+    factory { UpdateOrderStatusUseCase(get()) }
 
     // Use Cases para User
     factory { GetUserByIdUseCase(get()) }
@@ -38,7 +44,7 @@ val appModule = module {
     factory { UpdateUserUseCase(get()) }
 
     // ViewModels
-    viewModel { OrderViewModel(get(), get(), get()) }
+    viewModel { OrderViewModel(get(), get(), get(), get(), get(), get()) }
     viewModel { UserViewModel(get(), get()) }
     viewModel { LoginViewModel(get(), get()) }
     viewModel { ForgotPasswordViewModel(get()) }

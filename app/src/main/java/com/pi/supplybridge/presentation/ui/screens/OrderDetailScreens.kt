@@ -9,7 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -26,7 +25,7 @@ fun OrderDetailScreen(
 ) {
     val order by orderViewModel.orderDetails.collectAsState()
     val isLoading by orderViewModel.isLoading.collectAsState()
-    val context = LocalContext.current
+    val userType = "lojista" //by orderViewModel.userType.collectAsState()
 
     LaunchedEffect(orderId) {
         orderViewModel.loadOrderById(orderId)
@@ -83,11 +82,63 @@ fun OrderDetailScreen(
                                 DetailRow(label = "Método de Pagamento:", value = it.paymentMethod)
                                 DetailRow(label = "Endereço de Entrega:", value = it.deliveryAddress)
                                 DetailRow(label = "Notas:", value = it.notes)
+                                DetailRow(label = "Status:", value = it.status)
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                // Exibir ações baseadas no tipo de usuário
+                                when (userType) {
+                                    "lojista" -> LojistaActions(
+                                        onStatusChange = { newStatus ->
+                                            orderViewModel.updateOrderStatus(orderId, newStatus)
+                                        }
+                                    )
+                                    "fornecedor" -> FornecedorActions(
+                                        onLanceAceito = {
+                                            //orderViewModel.aceitarLance(orderId)
+                                        },
+                                        onLanceNegado = {
+                                            //orderViewModel.negarLance(orderId)
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun LojistaActions(onStatusChange: (String) -> Unit) {
+    Column {
+        Text("Opções do Lojista:", style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = { onStatusChange("Em negociação") }, modifier = Modifier.fillMaxWidth()) {
+            Text("Marcar como Em Negociação")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = { onStatusChange("Finalizada") }, modifier = Modifier.fillMaxWidth()) {
+            Text("Marcar como Finalizada")
+        }
+    }
+}
+
+@Composable
+fun FornecedorActions(onLanceAceito: () -> Unit, onLanceNegado: () -> Unit) {
+    Column {
+        Text("Opções do Fornecedor:", style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Button(onClick = onLanceAceito, modifier = Modifier.fillMaxWidth()) {
+            Text("Aceitar Lance - Tenho a peça")
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(onClick = onLanceNegado, modifier = Modifier.fillMaxWidth()) {
+            Text("Negar Lance - Não Tenho a peça")
         }
     }
 }

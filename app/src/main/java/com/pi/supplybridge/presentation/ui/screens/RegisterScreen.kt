@@ -144,21 +144,7 @@ fun RegisterScreen(
             }
         }
 
-        Spacer(modifier = Modifier.size(24.dp))
-
-        Text(
-            text = "Já possui uma conta? Entre aqui.",
-            style = TextStyle(
-                color = Color.Blue,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier
-                .clickable { onLoginClick() }
-                .padding(8.dp)
-        )
-
-        Spacer(modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.size(18.dp))
 
         Button(
             onClick = {
@@ -200,6 +186,18 @@ fun RegisterScreen(
                 Text("Registrar")
             }
         }
+
+        Text(
+            text = "Já possui uma conta? Entre aqui.",
+            style = TextStyle(
+                color = Color.Blue,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .clickable { onLoginClick() }
+                .padding(8.dp)
+        )
     }
 }
 

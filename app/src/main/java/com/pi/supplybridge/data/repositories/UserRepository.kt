@@ -36,7 +36,6 @@ class UserRepository(private val service: FirebaseService) {
         }
     }
 
-
     suspend fun updateUser(user: User): Boolean {
         return try {
             val updates = mapOf(

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pi.supplybridge.domain.models.Order
+import com.pi.supplybridge.presentation.ui.components.PaymentMethodDropdown
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -31,6 +31,7 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
     var expanded by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val status by remember { mutableStateOf("Aberta") }
     val paymentMethods = listOf("Dinheiro", "Pix", "Boleto", "Cartão de Crédito", "Cartão de Débito")
     val coroutineScope = rememberCoroutineScope()
 
@@ -65,8 +66,6 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
                     PaymentMethodDropdown(
                         paymentMethod = paymentMethod,
                         onValueChange = { paymentMethod = it },
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it },
                         paymentMethods = paymentMethods
                     )
 
@@ -86,11 +85,10 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
                                         quantity = quantity,
                                         paymentMethod = paymentMethod,
                                         deliveryAddress = deliveryAddress,
-                                        notes = notes
+                                        notes = notes,
+                                        status = status
                                     )
-                                    val success = orderViewModel.saveOrder(
-                                        order
-                                    )
+                                    val success = orderViewModel.saveOrder(order)
                                     loading = false
                                     if (success) {
                                         Toast.makeText(context, "Pedido salvo com sucesso!", Toast.LENGTH_SHORT).show()
@@ -159,53 +157,6 @@ fun InputField(label: String, value: String, onValueChange: (String) -> Unit) {
             cursorColor = Color.Blue
         )
     )
-}
-
-@Composable
-fun PaymentMethodDropdown(
-    paymentMethod: String,
-    onValueChange: (String) -> Unit,
-    expanded: Boolean,
-    onExpandedChange: (Boolean) -> Unit,
-    paymentMethods: List<String>
-) {
-    Box(modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 8.dp)) {
-        TextField(
-            value = paymentMethod,
-            onValueChange = { /* No-op */ },
-            label = { Text("Método de Pagamento") },
-            trailingIcon = {
-                IconButton(onClick = { onExpandedChange(true) }) {
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Expandir")
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Gray,
-                focusedIndicatorColor = Color.Blue,
-                unfocusedIndicatorColor = Color.LightGray,
-                cursorColor = Color.Blue
-            )
-        )
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { onExpandedChange(false) }
-        ) {
-            paymentMethods.forEach { method ->
-                DropdownMenuItem(
-                    text = { Text(method) },
-                    onClick = {
-                        onValueChange(method)
-                        onExpandedChange(false)
-                    }
-                )
-            }
-        }
-    }
 }
 
 fun validateFields(partName: String, storeName: String, quantity: String, paymentMethod: String, deliveryAddress: String): Boolean {

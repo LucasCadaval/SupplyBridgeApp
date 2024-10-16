@@ -7,6 +7,7 @@ data class Order(
     val quantity: String = "",
     val paymentMethod: String = "",
     val deliveryAddress: String = "",
-    val notes: String = ""
+    val notes: String = "",
+    val status: String = "Aberto", // "Aberto", "Em Negociação", "Finalizado"
+    val createdAt: Long = System.currentTimeMillis()
 )
-

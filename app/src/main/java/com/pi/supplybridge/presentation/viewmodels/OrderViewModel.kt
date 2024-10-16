@@ -4,9 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.pi.supplybridge.domain.models.Order
-import com.pi.supplybridge.domain.usecases.order.GetOrderByIdUseCase
-import com.pi.supplybridge.domain.usecases.order.GetOrdersUseCase
-import com.pi.supplybridge.domain.usecases.order.SaveOrderUseCase
+import com.pi.supplybridge.domain.usecases.order.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -14,7 +12,10 @@ import kotlinx.coroutines.launch
 class OrderViewModel(
     private val getOrdersUseCase: GetOrdersUseCase,
     private val getOrderByIdUseCase: GetOrderByIdUseCase,
-    private val saveOrderUseCase: SaveOrderUseCase
+    private val saveOrderUseCase: SaveOrderUseCase,
+    private val getOrdersByStatusUseCase: GetOrdersByStatusUseCase,
+    private val getOrdersByUserIdUseCase: GetOrdersByUserIdUseCase,
+    private val updateOrderStatusUseCase: UpdateOrderStatusUseCase
 ) : ViewModel() {
 
     private val _orders = MutableStateFlow<List<Order>>(emptyList())
@@ -26,7 +27,17 @@ class OrderViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _userType = MutableStateFlow<String?>(null)
+    val userType: StateFlow<String?> = _userType
+
+    private val _updateStatusResult = MutableStateFlow<Result<Boolean>>(Result.success(false))
+    val updateStatusResult: StateFlow<Result<Boolean>> = _updateStatusResult
+
     private val tag = "OrderViewModel"
+
+    fun setUserType(type: String) {
+        _userType.value = type
+    }
 
     fun loadOrders() {
         _isLoading.value = true
@@ -49,6 +60,7 @@ class OrderViewModel(
                 val result = getOrderByIdUseCase(orderId)
                 _orderDetails.value = result
             } catch (e: Exception) {
+                Log.e(tag, "Failed to load order by ID", e)
                 _orderDetails.value = null
             } finally {
                 _isLoading.value = false
@@ -58,10 +70,54 @@ class OrderViewModel(
 
     suspend fun saveOrder(order: Order): Boolean {
         return try {
-            saveOrderUseCase.invoke(order)
+            saveOrderUseCase(order)
             true
         } catch (e: Exception) {
+            Log.e(tag, "Failed to save order", e)
             false
+        }
+    }
+
+    fun loadOrdersByStatus(status: String) {
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val result = getOrdersByStatusUseCase(status)
+                _orders.value = result
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to load orders by status", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun loadOrdersByUser(userId: String, isStore: Boolean) {
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val result = getOrdersByUserIdUseCase(userId, isStore)
+                _orders.value = result
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to load orders by user", e)
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    fun updateOrderStatus(orderId: String, newStatus: String) {
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val result = updateOrderStatusUseCase(orderId, newStatus)
+                _updateStatusResult.value = Result.success(result)
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to update order status", e)
+                _updateStatusResult.value = Result.failure(e)
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }
