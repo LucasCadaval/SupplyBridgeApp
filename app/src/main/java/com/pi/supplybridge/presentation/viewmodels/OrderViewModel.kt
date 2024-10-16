@@ -27,17 +27,10 @@ class OrderViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _userType = MutableStateFlow<String?>(null)
-    val userType: StateFlow<String?> = _userType
-
     private val _updateStatusResult = MutableStateFlow<Result<Boolean>>(Result.success(false))
     val updateStatusResult: StateFlow<Result<Boolean>> = _updateStatusResult
 
     private val tag = "OrderViewModel"
-
-    fun setUserType(type: String) {
-        _userType.value = type
-    }
 
     fun loadOrders() {
         _isLoading.value = true

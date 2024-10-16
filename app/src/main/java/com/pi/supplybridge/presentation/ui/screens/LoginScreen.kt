@@ -106,9 +106,9 @@ fun LoginScreen(
                 coroutineScope.launch {
                     val userId = viewModel.login(email, password)
                     if (userId != null) {
-                        val userType = viewModel.getUserType(userId)
+                        val userType = viewModel.getUserDetails(userId)
                         if (userType != null) {
-                            if (userType == "fornecedor") {
+                            if (userType == "supplier") {
                                 navController.navigate(Screen.Dashboard.route)
                             } else {
                                 navController.navigate(Screen.Dashboard.route)

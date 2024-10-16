@@ -15,17 +15,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun OrderDetailScreen(
     orderId: String,
     onBackClick: () -> Unit,
-    orderViewModel: OrderViewModel = koinViewModel()
+    orderViewModel: OrderViewModel = koinViewModel(),
+    userViewModel: UserViewModel = koinViewModel()
 ) {
     val order by orderViewModel.orderDetails.collectAsState()
     val isLoading by orderViewModel.isLoading.collectAsState()
-    val userType = "lojista" //by orderViewModel.userType.collectAsState()
+    val userType by userViewModel.userType.collectAsState()
+
+    LaunchedEffect(Unit) {
+        userViewModel.loadUserType()
+    }
 
     LaunchedEffect(orderId) {
         orderViewModel.loadOrderById(orderId)
@@ -88,17 +94,17 @@ fun OrderDetailScreen(
 
                                 // Exibir ações baseadas no tipo de usuário
                                 when (userType) {
-                                    "lojista" -> LojistaActions(
+                                    "store" -> StoreActions(
                                         onStatusChange = { newStatus ->
                                             orderViewModel.updateOrderStatus(orderId, newStatus)
                                         }
                                     )
-                                    "fornecedor" -> FornecedorActions(
+                                    "supplier" -> SupplierActions(
                                         onLanceAceito = {
-                                            //orderViewModel.aceitarLance(orderId)
+                                            //orderViewModel.acceptBid(orderId)
                                         },
                                         onLanceNegado = {
-                                            //orderViewModel.negarLance(orderId)
+                                            //orderViewModel.rejectBid(orderId)
                                         }
                                     )
                                 }
@@ -112,9 +118,9 @@ fun OrderDetailScreen(
 }
 
 @Composable
-fun LojistaActions(onStatusChange: (String) -> Unit) {
+fun StoreActions(onStatusChange: (String) -> Unit) {
     Column {
-        Text("Opções do Lojista:", style = MaterialTheme.typography.bodyLarge)
+        Text("Opções da Loja:", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(8.dp))
 
         Button(onClick = { onStatusChange("Em negociação") }, modifier = Modifier.fillMaxWidth()) {
@@ -128,7 +134,7 @@ fun LojistaActions(onStatusChange: (String) -> Unit) {
 }
 
 @Composable
-fun FornecedorActions(onLanceAceito: () -> Unit, onLanceNegado: () -> Unit) {
+fun SupplierActions(onLanceAceito: () -> Unit, onLanceNegado: () -> Unit) {
     Column {
         Text("Opções do Fornecedor:", style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.height(8.dp))

@@ -1,23 +1,14 @@
 package com.pi.supplybridge.di
 
+import com.pi.supplybridge.data.cache.UserPreferences
 import com.pi.supplybridge.data.repositories.AuthRepository
 import com.pi.supplybridge.data.repositories.OrderRepository
 import com.pi.supplybridge.data.repositories.UserRepository
 import com.pi.supplybridge.data.services.FirebaseService
-import com.pi.supplybridge.domain.usecases.order.GetOrderByIdUseCase
-import com.pi.supplybridge.domain.usecases.order.GetOrdersByStatusUseCase
-import com.pi.supplybridge.domain.usecases.order.GetOrdersByUserIdUseCase
-import com.pi.supplybridge.domain.usecases.order.GetOrdersUseCase
-import com.pi.supplybridge.domain.usecases.order.SaveOrderUseCase
-import com.pi.supplybridge.domain.usecases.order.UpdateOrderStatusUseCase
-import com.pi.supplybridge.domain.usecases.user.GetUserByIdUseCase
-import com.pi.supplybridge.domain.usecases.user.SaveUserUseCase
-import com.pi.supplybridge.domain.usecases.user.UpdateUserUseCase
-import com.pi.supplybridge.presentation.viewmodels.ProfileViewModel
-import com.pi.supplybridge.presentation.viewmodels.ForgotPasswordViewModel
-import com.pi.supplybridge.presentation.viewmodels.LoginViewModel
-import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
-import com.pi.supplybridge.presentation.viewmodels.UserViewModel
+import com.pi.supplybridge.domain.usecases.order.*
+import com.pi.supplybridge.domain.usecases.user.*
+import com.pi.supplybridge.presentation.viewmodels.*
+import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
@@ -29,6 +20,9 @@ val appModule = module {
     single { OrderRepository(get()) }
     single { UserRepository(get()) }
     single { AuthRepository(get()) }
+
+    // User Preferences (requires Context)
+    single { UserPreferences(androidContext()) }
 
     // Use Cases para Order
     factory { GetOrdersUseCase(get()) }
@@ -43,10 +37,13 @@ val appModule = module {
     factory { SaveUserUseCase(get()) }
     factory { UpdateUserUseCase(get()) }
 
+    // Use Case para Store Preferences
+    factory { StorePreferencesUseCase(get()) }
+
     // ViewModels
     viewModel { OrderViewModel(get(), get(), get(), get(), get(), get()) }
-    viewModel { UserViewModel(get(), get()) }
-    viewModel { LoginViewModel(get(), get()) }
+    viewModel { UserViewModel(get(), get(), get()) }
+    viewModel { LoginViewModel(get(), get(), get()) }
     viewModel { ForgotPasswordViewModel(get()) }
     viewModel { ProfileViewModel(get()) }
 }

@@ -18,22 +18,25 @@ import com.pi.supplybridge.presentation.ui.components.OrderItem
 import com.pi.supplybridge.presentation.ui.components.StatusFilter
 import com.pi.supplybridge.presentation.ui.navigation.Screen
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun OrdersScreen(
     navController: NavController,
-    orderViewModel: OrderViewModel = koinViewModel()
+    orderViewModel: OrderViewModel = koinViewModel(),
+    userViewModel: UserViewModel = koinViewModel()
 ) {
     val orders by orderViewModel.orders.collectAsState()
     val isLoading by orderViewModel.isLoading.collectAsState()
-    val context = LocalContext.current
+    val userType by userViewModel.userType.collectAsState()
     var selectedStatus by remember { mutableStateOf("Todos") }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         orderViewModel.loadOrders()
+        userViewModel.loadUserType()
     }
 
     Box(
@@ -74,15 +77,17 @@ fun OrdersScreen(
             }
         }
 
-        FloatingActionButton(
-            onClick = { navController.navigate(Screen.NewOrder.route) },
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = Color.White,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = "Criar Novo Pedido")
+        if (userType != "supplier") {
+            FloatingActionButton(
+                onClick = { navController.navigate(Screen.NewOrder.route) },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Criar Novo Pedido")
+            }
         }
     }
 }

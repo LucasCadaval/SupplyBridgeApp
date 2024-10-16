@@ -17,11 +17,16 @@ import androidx.navigation.NavController
 import com.pi.supplybridge.domain.models.Order
 import com.pi.supplybridge.presentation.ui.components.PaymentMethodDropdown
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel = koinViewModel()) {
+fun NewOrderScreen(
+    navController: NavController,
+    orderViewModel: OrderViewModel = koinViewModel(),
+    userViewModel: UserViewModel = koinViewModel()
+) {
     var partName by remember { mutableStateOf("") }
     var storeName by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf("") }
@@ -34,6 +39,13 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
     val status by remember { mutableStateOf("Aberta") }
     val paymentMethods = listOf("Dinheiro", "Pix", "Boleto", "Cartão de Crédito", "Cartão de Débito")
     val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            val storeInfo = userViewModel.loadStoreInfo()
+            storeName = storeInfo.toString() ?: ""
+        }
+    }
 
     Surface(color = Color(0xFFEFEFEF)) {
         Column(
@@ -60,7 +72,6 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     InputField(label = "Nome da Peça", value = partName, onValueChange = { partName = it })
-                    InputField(label = "Nome da Loja", value = storeName, onValueChange = { storeName = it })
                     InputField(label = "Quantidade", value = quantity, onValueChange = { quantity = it })
 
                     PaymentMethodDropdown(
@@ -76,7 +87,7 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
 
                     Button(
                         onClick = {
-                            if (validateFields(partName, storeName, quantity, paymentMethod, deliveryAddress)) {
+                            if (validateFields(partName, quantity, paymentMethod, deliveryAddress)) {
                                 coroutineScope.launch {
                                     loading = true
                                     val order = Order(
@@ -101,7 +112,11 @@ fun NewOrderScreen(navController: NavController, orderViewModel: OrderViewModel 
                                 Toast.makeText(context, "Por favor, preencha todos os campos corretamente.", Toast.LENGTH_SHORT).show()
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Blue,
+                            contentColor = Color.White
+                        )
                     ) {
                         if (loading) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
@@ -159,8 +174,8 @@ fun InputField(label: String, value: String, onValueChange: (String) -> Unit) {
     )
 }
 
-fun validateFields(partName: String, storeName: String, quantity: String, paymentMethod: String, deliveryAddress: String): Boolean {
+fun validateFields(partName: String, quantity: String, paymentMethod: String, deliveryAddress: String): Boolean {
     val paymentMethods = listOf("Dinheiro", "Pix", "Boleto", "Cartão de Crédito", "Cartão de Débito")
-    return partName.isNotBlank() && storeName.isNotBlank() && quantity.isNotBlank() &&
+    return partName.isNotBlank() && quantity.isNotBlank() &&
             paymentMethods.contains(paymentMethod) && deliveryAddress.isNotBlank()
 }

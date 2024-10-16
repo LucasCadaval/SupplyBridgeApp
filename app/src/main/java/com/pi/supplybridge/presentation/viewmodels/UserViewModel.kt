@@ -6,17 +6,26 @@ import androidx.lifecycle.viewModelScope
 import com.pi.supplybridge.domain.models.User
 import com.pi.supplybridge.domain.usecases.user.GetUserByIdUseCase
 import com.pi.supplybridge.domain.usecases.user.SaveUserUseCase
+import com.pi.supplybridge.domain.usecases.user.StorePreferencesUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class UserViewModel(
     private val getUserByIdUseCase: GetUserByIdUseCase,
-    private val saveUserUseCase: SaveUserUseCase
+    private val saveUserUseCase: SaveUserUseCase,
+    private val storePreferencesUseCase: StorePreferencesUseCase
 ) : ViewModel() {
 
-    private val _userDetails = MutableStateFlow<User?>(null)
-    val userDetails: StateFlow<User?> = _userDetails
+    private val _userType = MutableStateFlow<String?>(null)
+    val userType: StateFlow<String?> = _userType
+
+    private val _storeInfo = MutableStateFlow<Pair<String?, String?>>(null to null)
+    val storeInfo: StateFlow<Pair<String?, String?>> = _storeInfo
+
+    private val tag = "UserViewModel"
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -24,52 +33,52 @@ class UserViewModel(
     private val _isSaveSuccessful = MutableStateFlow<Boolean?>(null)
     val isSaveSuccessful: StateFlow<Boolean?> = _isSaveSuccessful
 
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-
-    private val tag = "UserViewModel"
-
-    fun loadUserById(userId: String) {
-        _isLoading.value = true
-        Log.d(tag, "Carregando usuário com ID: $userId")
-        viewModelScope.launch {
-            try {
-                val result = getUserByIdUseCase(userId)
-                _userDetails.value = result
-                Log.d(tag, "Usuário carregado com sucesso: $result")
-            } catch (e: Exception) {
-                _errorMessage.value = "Erro ao carregar usuário: ${e.message}"
-                Log.e(tag, "Erro ao carregar usuário: ${e.message}")
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
     fun saveUser(user: User) {
         _isLoading.value = true
-        Log.d(tag, "Salvando usuário: $user")
+        viewModelScope.launch {
+            val success = saveUserUseCase(user)
+            _isSaveSuccessful.value = success
+            _isLoading.value = false
+        }
+    }
+
+    fun clearSaveState() {
+        _isSaveSuccessful.value = null
+    }
+
+    fun loadUserType() {
         viewModelScope.launch {
             try {
-                val isSuccessful = saveUserUseCase(user)
-                _isSaveSuccessful.value = isSuccessful
-                if (!isSuccessful) {
-                    _errorMessage.value = "Erro ao salvar dados do usuário"
-                    Log.e(tag, "Erro ao salvar dados do usuário")
-                } else {
-                    Log.d(tag, "Usuário salvo com sucesso.")
-                }
+                val type = storePreferencesUseCase.getUserType()
+                _userType.value = type
+                Log.d(tag, "User type loaded: $type")
             } catch (e: Exception) {
-                _isSaveSuccessful.value = false
-                _errorMessage.value = "Erro ao salvar usuário: ${e.message}"
-                Log.e(tag, "Erro ao salvar usuário: ${e.message}")
-            } finally {
-                _isLoading.value = false
+                Log.e(tag, "Failed to load user type", e)
             }
         }
     }
 
-    fun clearErrorMessage() {
-        _errorMessage.value = null
+    fun loadStoreInfo() {
+        viewModelScope.launch {
+            try {
+                val info = storePreferencesUseCase.getStoreInfo()
+                _storeInfo.value = info
+                Log.d(tag, "Store info loaded: $info")
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to load store info", e)
+            }
+        }
+    }
+
+    suspend fun saveUserType(userType: String) {
+        withContext(Dispatchers.IO) {
+            storePreferencesUseCase.saveUserType(userType)
+        }
+    }
+
+    suspend fun saveStoreInfo(storeId: String, storeName: String) {
+        withContext(Dispatchers.IO) {
+            storePreferencesUseCase.saveStoreInfo(storeId, storeName)
+        }
     }
 }
