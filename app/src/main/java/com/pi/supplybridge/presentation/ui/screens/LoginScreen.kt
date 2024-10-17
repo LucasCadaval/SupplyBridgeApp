@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.pi.supplybridge.R
+import com.pi.supplybridge.domain.enums.UserType
 import com.pi.supplybridge.presentation.ui.navigation.Screen
 import com.pi.supplybridge.presentation.viewmodels.LoginViewModel
 import kotlinx.coroutines.launch
@@ -38,6 +39,7 @@ fun LoginScreen(
     val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -114,33 +116,39 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.size(24.dp))
 
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    val userId = viewModel.login(email, password)
-                    if (userId != null) {
-                        val userType = viewModel.getUserType(userId)
-                        if (userType != null) {
-                            if (userType == "fornecedor") {
-                                navController.navigate(Screen.Dashboard.route)
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(48.dp))
+        } else {
+            Button(
+                onClick = {
+                    isLoading = true
+                    coroutineScope.launch {
+                        val userId = viewModel.login(email, password)
+                        if (userId != null) {
+                            val userDetails = viewModel.getUserDetails(userId)
+                            if (userDetails != null) {
+                                if (userDetails.userType == UserType.SUPPLIER) {
+                                    navController.navigate(Screen.Dashboard.route)
+                                } else {
+                                    navController.navigate(Screen.Dashboard.route)
+                                }
                             } else {
-                                navController.navigate(Screen.Dashboard.route)
+                                Toast.makeText(context, "Erro ao buscar informações do usuário", Toast.LENGTH_SHORT).show()
                             }
                         } else {
-                            Toast.makeText(context, "Erro ao buscar informações do usuário", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Erro ao fazer o login", Toast.LENGTH_SHORT).show()
                         }
-                    } else {
-                        Toast.makeText(context, "Erro ao fazer o login", Toast.LENGTH_SHORT).show()
+                        isLoading = false
                     }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Blue,
-                contentColor = Color.White
-            )
-        ) {
-            Text("Entrar")
+                },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Blue,
+                    contentColor = Color.White
+                )
+            ) {
+                Text("Entrar")
+            }
         }
 
         Spacer(modifier = Modifier.size(24.dp))
@@ -158,3 +166,4 @@ fun LoginScreen(
         )
     }
 }
+

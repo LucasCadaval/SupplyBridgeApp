@@ -1,11 +1,9 @@
 package com.pi.supplybridge.presentation.ui.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,16 +14,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.R
+import com.pi.supplybridge.domain.enums.UserType
 import com.pi.supplybridge.domain.models.User
+import com.pi.supplybridge.presentation.ui.components.CNPJInputField
 import com.pi.supplybridge.presentation.viewmodels.UserViewModel
-import com.pi.supplybridge.utils.MaskVisualTransformation
 import com.pi.supplybridge.utils.ValidationUtils
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -47,7 +43,7 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var cnpj by remember { mutableStateOf("") }
-    var userType by remember { mutableStateOf("fornecedor") }
+    var userType by remember { mutableStateOf(UserType.STORE) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
@@ -142,36 +138,22 @@ fun RegisterScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 RadioButton(
-                    selected = userType == "fornecedor",
-                    onClick = { userType = "fornecedor" }
+                    selected = userType == UserType.SUPPLIER,
+                    onClick = { userType = UserType.SUPPLIER }
                 )
                 Text("Fornecedor")
             }
             Spacer(modifier = Modifier.size(16.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 RadioButton(
-                    selected = userType == "loja",
-                    onClick = { userType = "loja" }
+                    selected = userType == UserType.STORE,
+                    onClick = { userType = UserType.STORE }
                 )
-                Text("Lojista")
+                Text("Loja")
             }
         }
 
-        Spacer(modifier = Modifier.size(24.dp))
-
-        Text(
-            text = "Já possui uma conta? Entre aqui.",
-            style = TextStyle(
-                color = Color.Blue,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            ),
-            modifier = Modifier
-                .clickable { onLoginClick() }
-                .padding(8.dp)
-        )
-
-        Spacer(modifier = Modifier.size(24.dp))
+        Spacer(modifier = Modifier.size(18.dp))
 
         Button(
             onClick = {
@@ -213,34 +195,20 @@ fun RegisterScreen(
                 Text("Registrar")
             }
         }
+
+        Text(
+            text = "Já possui uma conta? Entre aqui.",
+            style = TextStyle(
+                color = Color.Blue,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            ),
+            modifier = Modifier
+                .clickable { onLoginClick() }
+                .padding(8.dp)
+        )
     }
 }
 
 
-@Composable
-fun CNPJInputField(cnpj: String, onCNPJChange: (String) -> Unit) {
-    var textState by remember { mutableStateOf(cnpj) }
-    val cnpjMask = "##.###.###/####-##"
-    val visualTransformation = MaskVisualTransformation(cnpjMask)
 
-    OutlinedTextField(
-        value = textState,
-        onValueChange = { newValue ->
-            if (newValue.length <= 14 && newValue.all { it.isDigit() }) {
-                textState = newValue
-                onCNPJChange(newValue)
-            }
-        },
-        visualTransformation = visualTransformation,
-        modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
-            imeAction = ImeAction.Done
-        ),
-        placeholder = { Text("CNPJ") },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.LightGray,
-            unfocusedContainerColor = Color.White
-        )
-    )
-}

@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.androidx.datastore.preferences)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -78,7 +79,6 @@ dependencies {
     implementation(libs.androidx.constraintlayout.compose.android)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.navigation.compose)
-
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
 }
