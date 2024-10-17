@@ -7,23 +7,18 @@ import com.pi.supplybridge.domain.models.User
 import com.pi.supplybridge.domain.usecases.user.GetUserByIdUseCase
 import com.pi.supplybridge.domain.usecases.user.SaveUserUseCase
 import com.pi.supplybridge.domain.usecases.user.StorePreferencesUseCase
+import com.pi.supplybridge.domain.usecases.user.UserInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class UserViewModel(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val saveUserUseCase: SaveUserUseCase,
     private val storePreferencesUseCase: StorePreferencesUseCase
 ) : ViewModel() {
-
-    private val _userType = MutableStateFlow<String?>(null)
-    val userType: StateFlow<String?> = _userType
-
-    private val _storeInfo = MutableStateFlow<Pair<String?, String?>>(null to null)
-    val storeInfo: StateFlow<Pair<String?, String?>> = _storeInfo
+    private val _userInfo = MutableStateFlow<UserInfo?>(null)
+    val userInfo: StateFlow<UserInfo?> = _userInfo
 
     private val tag = "UserViewModel"
 
@@ -42,27 +37,11 @@ class UserViewModel(
         }
     }
 
-    fun clearSaveState() {
-        _isSaveSuccessful.value = null
-    }
-
-    fun loadUserType() {
+    fun loadUserInfo() {
         viewModelScope.launch {
             try {
-                val type = storePreferencesUseCase.getUserType()
-                _userType.value = type
-                Log.d(tag, "User type loaded: $type")
-            } catch (e: Exception) {
-                Log.e(tag, "Failed to load user type", e)
-            }
-        }
-    }
-
-    fun loadStoreInfo() {
-        viewModelScope.launch {
-            try {
-                val info = storePreferencesUseCase.getStoreInfo()
-                _storeInfo.value = info
+                val info = storePreferencesUseCase.getUserInfo()
+                _userInfo.value = info
                 Log.d(tag, "Store info loaded: $info")
             } catch (e: Exception) {
                 Log.e(tag, "Failed to load store info", e)
@@ -70,15 +49,31 @@ class UserViewModel(
         }
     }
 
-    suspend fun saveUserType(userType: String) {
-        withContext(Dispatchers.IO) {
-            storePreferencesUseCase.saveUserType(userType)
+    suspend fun getUserNameDirectly(userId: String): String? {
+        return try {
+            val user = getUserByIdUseCase(userId)
+            user?.name
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to load user name by ID", e)
+            null
         }
     }
 
-    suspend fun saveStoreInfo(storeId: String, storeName: String) {
-        withContext(Dispatchers.IO) {
-            storePreferencesUseCase.saveStoreInfo(storeId, storeName)
+    fun loadUserNameById(userId: String) {
+        _isLoading.value = true
+        viewModelScope.launch {
+            try {
+                val user = getUserByIdUseCase(userId)
+                if (user != null) {
+                    _userInfo.value?.userName = user.name
+                }
+                Log.d(tag, "Store name loaded: ${user?.name}")
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to load user name by ID", e)
+                _userInfo.value?.userName = null
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 }

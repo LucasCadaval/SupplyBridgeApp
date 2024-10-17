@@ -1,11 +1,9 @@
 package com.pi.supplybridge.presentation.ui.screens
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,16 +14,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.pi.supplybridge.R
+import com.pi.supplybridge.domain.enums.UserType
 import com.pi.supplybridge.domain.models.User
+import com.pi.supplybridge.presentation.ui.components.CNPJInputField
 import com.pi.supplybridge.presentation.viewmodels.UserViewModel
-import com.pi.supplybridge.utils.MaskVisualTransformation
 import com.pi.supplybridge.utils.ValidationUtils
 
 import org.koin.androidx.compose.koinViewModel
@@ -43,7 +39,7 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var cnpj by remember { mutableStateOf("") }
-    var userType by remember { mutableStateOf("fornecedor") }
+    var userType by remember { mutableStateOf(UserType.STORE) }
 
     LaunchedEffect(isSaveSuccessful) {
         if (isSaveSuccessful == true) {
@@ -129,18 +125,18 @@ fun RegisterScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 RadioButton(
-                    selected = userType == "fornecedor",
-                    onClick = { userType = "fornecedor" }
+                    selected = userType == UserType.SUPPLIER,
+                    onClick = { userType = UserType.SUPPLIER }
                 )
                 Text("Fornecedor")
             }
             Spacer(modifier = Modifier.size(16.dp))
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 RadioButton(
-                    selected = userType == "loja",
-                    onClick = { userType = "loja" }
+                    selected = userType == UserType.STORE,
+                    onClick = { userType = UserType.STORE }
                 )
-                Text("Lojista")
+                Text("Loja")
             }
         }
 
@@ -202,30 +198,4 @@ fun RegisterScreen(
 }
 
 
-@Composable
-fun CNPJInputField(cnpj: String, onCNPJChange: (String) -> Unit) {
-    var textState by remember { mutableStateOf(cnpj) }
-    val cnpjMask = "##.###.###/####-##"
-    val visualTransformation = MaskVisualTransformation(cnpjMask)
 
-    OutlinedTextField(
-        value = textState,
-        onValueChange = { newValue ->
-            if (newValue.length <= 14 && newValue.all { it.isDigit() }) {
-                textState = newValue
-                onCNPJChange(newValue)
-            }
-        },
-        visualTransformation = visualTransformation,
-        modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = androidx.compose.ui.text.input.KeyboardType.Number,
-            imeAction = ImeAction.Done
-        ),
-        placeholder = { Text("CNPJ") },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = Color.LightGray,
-            unfocusedContainerColor = Color.White
-        )
-    )
-}

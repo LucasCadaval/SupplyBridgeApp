@@ -5,6 +5,10 @@ import com.pi.supplybridge.data.repositories.OrderRepository
 
 class GetOrdersByStatusUseCase(private val orderRepository: OrderRepository) {
     suspend operator fun invoke(status: String): List<Order> {
-        return orderRepository.getOrdersByStatus(status)
+        return if (status == "Todos") {
+            orderRepository.getOrders()
+        } else {
+            orderRepository.getOrdersByStatus(status)
+        }
     }
 }

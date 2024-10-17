@@ -11,9 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.pi.supplybridge.domain.enums.OrderStatus
+import com.pi.supplybridge.domain.enums.UserType
 import com.pi.supplybridge.presentation.ui.components.OrderItem
 import com.pi.supplybridge.presentation.ui.components.StatusFilter
 import com.pi.supplybridge.presentation.ui.navigation.Screen
@@ -30,13 +31,13 @@ fun OrdersScreen(
 ) {
     val orders by orderViewModel.orders.collectAsState()
     val isLoading by orderViewModel.isLoading.collectAsState()
-    val userType by userViewModel.userType.collectAsState()
-    var selectedStatus by remember { mutableStateOf("Todos") }
+    val userInfo by userViewModel.userInfo.collectAsState()
+    var selectedStatus by remember { mutableStateOf<OrderStatus?>(null) }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         orderViewModel.loadOrders()
-        userViewModel.loadUserType()
+        userViewModel.loadUserInfo()
     }
 
     Box(
@@ -71,13 +72,13 @@ fun OrdersScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(orders) { order ->
-                        OrderItem(order, navController)
+                        OrderItem(order, navController, userViewModel)
                     }
                 }
             }
         }
 
-        if (userType != "supplier") {
+        if (userInfo?.userType != UserType.SUPPLIER) {
             FloatingActionButton(
                 onClick = { navController.navigate(Screen.NewOrder.route) },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -91,3 +92,4 @@ fun OrdersScreen(
         }
     }
 }
+

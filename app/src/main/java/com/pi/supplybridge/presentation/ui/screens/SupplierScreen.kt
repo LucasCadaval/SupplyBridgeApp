@@ -12,12 +12,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pi.supplybridge.presentation.ui.components.OrderItem
 import com.pi.supplybridge.presentation.viewmodels.OrderViewModel
+import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SupplierScreen(
     navController: NavController,
-    orderViewModel: OrderViewModel = koinViewModel()
+    orderViewModel: OrderViewModel = koinViewModel(),
+    userViewModel: UserViewModel = koinViewModel(),
+
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val orders by orderViewModel.orders.collectAsState()
@@ -45,7 +48,7 @@ fun SupplierScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             items(orders) { order ->
-                OrderItem(order, navController)
+                OrderItem(order, navController, userViewModel = userViewModel)
             }
         }
     }

@@ -10,13 +10,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.pi.supplybridge.domain.enums.OrderStatus
 
 @Composable
 fun StatusFilter(
-    selectedStatus: String,
-    onStatusSelected: (String) -> Unit
+    selectedStatus: OrderStatus?,
+    onStatusSelected: (OrderStatus?) -> Unit
 ) {
-    val statusList = listOf("Todos", "Aberta", "Em Negociação", "Finalizada")
+    val statusList = listOf<Pair<String, OrderStatus?>>(
+        "Todos" to null
+    ) + OrderStatus.entries.map { it.description to it }
 
     LazyRow(
         modifier = Modifier
@@ -24,13 +27,14 @@ fun StatusFilter(
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(statusList) { status ->
+        items(statusList) { (label, status) ->
             FilterChip(
                 selected = selectedStatus == status,
                 onClick = { onStatusSelected(status) },
-                label = { Text(status) },
+                label = { Text(label) },
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
     }
 }
+
