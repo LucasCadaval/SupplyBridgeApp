@@ -25,6 +25,10 @@ import com.pi.supplybridge.presentation.viewmodels.UserViewModel
 import com.pi.supplybridge.utils.validateFields
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 
 @Composable
 fun NewOrderScreen(
@@ -48,11 +52,20 @@ fun NewOrderScreen(
         userViewModel.loadUserInfo()
     }
 
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+
     Surface(color = Color(0xFFEFEFEF)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(16.dp)
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    })
+                },
             verticalArrangement = Arrangement.Top
         ) {
             NewOrderHeader(onBackClick = {
