@@ -60,8 +60,9 @@ fun NavigationHost(
             )
         }
 
-        composable(route = Screen.Profile.route) {
-            ProfileScreen()
+        composable(route = Screen.Profile.route) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            ProfileScreen(userId = userId)
         }
     }
 }

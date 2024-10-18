@@ -57,6 +57,6 @@ val appModule = module {
     viewModel { UserViewModel(get(), get(), get()) }
     viewModel { LoginViewModel(get(), get(), get()) }
     viewModel { ForgotPasswordViewModel(get()) }
-    viewModel { ProfileViewModel(get()) }
+    viewModel { ProfileViewModel(get(), get()) }
     viewModel { BidViewModel(get(), get(), get()) }
 }

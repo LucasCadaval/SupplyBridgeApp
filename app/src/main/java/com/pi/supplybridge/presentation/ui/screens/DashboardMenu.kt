@@ -11,6 +11,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -20,10 +21,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.pi.supplybridge.R
+import com.pi.supplybridge.presentation.viewmodels.UserViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun DashboardMenu(navController: NavController) {
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    val userViewModel: UserViewModel = koinViewModel()
+    val userInfo by userViewModel.userInfo.collectAsState()
+    val userId = userInfo?.userId ?: ""
 
     Scaffold(
         bottomBar = {
@@ -90,7 +97,13 @@ fun DashboardMenu(navController: NavController) {
                 0 -> SupplierScreen(navController)
                 1 -> OrdersScreen(navController)
                 //2 -> ChatScreen()
-                3 -> ProfileScreen()
+                3 -> {
+                    if (userId.isNotEmpty()) {
+                        ProfileScreen(userId = userId)
+                    } else {
+                        Text("Usuário não encontrado")
+                    }
+                }
             }
         }
     }
